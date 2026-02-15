@@ -589,8 +589,8 @@ const API_KEY = process.env.STRIPE_API_KEY;</div>
             },
             azure_key: {
                 name: 'Azure Key',
-                regex: /[a-zA-Z0-9+/]{44}={0,2}/g,
-                description: 'Azure Storage/API Key (Base64)'
+                regex: /(?:azure|storage)[_-]?(?:key|secret)\s*[:=]\s*['"]?([a-zA-Z0-9+/]{44}={0,2})['"]?/gi,
+                description: 'Azure Storage/API Key'
             },
             heroku_api_key: {
                 name: 'Heroku API Key',
@@ -599,31 +599,43 @@ const API_KEY = process.env.STRIPE_API_KEY;</div>
             }
         };
 
-        // Shannon entropy calculation
+        // Shannon entropy calculation (optimized)
         function calculateEntropy(str) {
-            if (!str) return 0;
+            if (!str || str.length < 8) return 0;
             const len = str.length;
-            const frequencies = {};
-            for (let char of str) {
-                frequencies[char] = (frequencies[char] || 0) + 1;
+            const freq = {};
+            for (let i = 0; i < len; i++) {
+                freq[str[i]] = (freq[str[i]] || 0) + 1;
             }
             let entropy = 0;
-            for (let freq of Object.values(frequencies)) {
-                const probability = freq / len;
-                entropy -= probability * Math.log2(probability);
+            for (let char in freq) {
+                const p = freq[char] / len;
+                entropy -= p * Math.log2(p);
             }
             return entropy;
         }
 
-        // High entropy string detection
+        // High entropy string detection (improved accuracy)
         function detectHighEntropy(line, lineNumber) {
             const findings = [];
-            const tokens = line.split(/[\s'"=:,;(){}[\]]/);
+            // Avoid common false positives
+            if (/^[\s#\/\*]*(?:import|export|const|let|var|function|class|if|for|while)/.test(line)) {
+                return findings;
+            }
+            
+            const tokens = line.split(/[\s'"=:,;(){}[\]<>]/);
             
             for (let token of tokens) {
-                if (token.length >= 20 && token.length <= 100) {
+                // Check length and basic characteristics
+                if (token.length >= 20 && token.length <= 100 && /[a-zA-Z0-9]/.test(token)) {
+                    // Skip common patterns that aren't secrets
+                    if (/^(http|https|www|localhost|127\.0\.0\.1)/.test(token)) continue;
+                    if (/^\d+$/.test(token)) continue; // Skip pure numbers
+                    if (token.includes('example') || token.includes('test') || token.includes('demo')) continue;
+                    
                     const entropy = calculateEntropy(token);
-                    if (entropy >= 4.5) {
+                    // Higher threshold to reduce false positives
+                    if (entropy >= 4.7 && !/^[a-z]+$/.test(token)) {
                         findings.push({
                             type: 'High Entropy String',
                             line: lineNumber,
@@ -638,7 +650,7 @@ const API_KEY = process.env.STRIPE_API_KEY;</div>
             return findings;
         }
 
-        // Main scanning function
+        // Main scanning function (optimized and bug-fixed)
         function scanCode() {
             const input = document.getElementById('codeInput').value;
             if (!input.trim()) {
@@ -647,60 +659,73 @@ const API_KEY = process.env.STRIPE_API_KEY;</div>
             }
 
             // Show loading
-            document.getElementById('loading').classList.add('active');
-            document.getElementById('resultsSection').style.display = 'none';
+            const loading = document.getElementById('loading');
+            const resultsSection = document.getElementById('resultsSection');
+            loading.classList.add('active');
+            resultsSection.style.display = 'none';
 
-            // Simulate processing delay for better UX
+            // Process in next tick to allow UI update
             setTimeout(() => {
-                const findings = [];
-                const lines = input.split('\n');
+                try {
+                    const findings = [];
+                    const lines = input.split('\n');
 
-                // Apply regex patterns
-                for (let [key, pattern] of Object.entries(patterns)) {
-                    let match;
-                    const regex = new RegExp(pattern.regex);
-                    
-                    lines.forEach((line, index) => {
-                        // Reset regex lastIndex
-                        const localRegex = new RegExp(pattern.regex);
-                        while ((match = localRegex.exec(line)) !== null) {
-                            findings.push({
-                                type: pattern.name,
-                                line: index + 1,
-                                match: match[0],
-                                content: line.trim(),
-                                description: pattern.description
-                            });
-                        }
-                    });
-                }
-
-                // Apply entropy detection
-                lines.forEach((line, index) => {
-                    const entropyFindings = detectHighEntropy(line, index + 1);
-                    findings.push(...entropyFindings);
-                });
-
-                // Remove duplicates
-                const uniqueFindings = [];
-                const seen = new Set();
-                for (let finding of findings) {
-                    const key = `${finding.type}-${finding.line}-${finding.match}`;
-                    if (!seen.has(key)) {
-                        seen.add(key);
-                        uniqueFindings.push(finding);
+                    // Apply regex patterns (optimized)
+                    for (let [key, pattern] of Object.entries(patterns)) {
+                        lines.forEach((line, index) => {
+                            const localRegex = new RegExp(pattern.regex.source, pattern.regex.flags);
+                            let match;
+                            while ((match = localRegex.exec(line)) !== null) {
+                                // Extract captured group if exists, otherwise use full match
+                                const matchValue = match[1] || match[0];
+                                findings.push({
+                                    type: pattern.name,
+                                    line: index + 1,
+                                    match: matchValue,
+                                    content: line.trim(),
+                                    description: pattern.description
+                                });
+                                // Prevent infinite loop on zero-width matches
+                                if (match.index === localRegex.lastIndex) {
+                                    localRegex.lastIndex++;
+                                }
+                            }
+                        });
                     }
+
+                    // Apply entropy detection (with improved filtering)
+                    lines.forEach((line, index) => {
+                        const entropyFindings = detectHighEntropy(line, index + 1);
+                        findings.push(...entropyFindings);
+                    });
+
+                    // Remove duplicates (optimized)
+                    const uniqueFindings = [];
+                    const seen = new Set();
+                    for (let finding of findings) {
+                        const key = `${finding.type}|${finding.line}|${finding.match}`;
+                        if (!seen.has(key)) {
+                            seen.add(key);
+                            uniqueFindings.push(finding);
+                        }
+                    }
+
+                    // Sort by line number
+                    uniqueFindings.sort((a, b) => a.line - b.line);
+
+                    // Display results
+                    displayResults(uniqueFindings);
+                } catch (error) {
+                    console.error('Scan error:', error);
+                    alert('An error occurred during scanning. Please try again.');
+                } finally {
+                    // Always hide loading
+                    loading.classList.remove('active');
                 }
-
-                // Hide loading
-                document.getElementById('loading').classList.remove('active');
-
-                // Display results
-                displayResults(uniqueFindings);
-            }, 500);
+            }, 300);
         }
 
-        // Display results
+        // Display results (bug-fixed and optimized)
         function displayResults(findings) {
             const resultsSection = document.getElementById('resultsSection');
             const statsContainer = document.getElementById('resultStats');
@@ -724,7 +749,7 @@ const API_KEY = process.env.STRIPE_API_KEY;</div>
 
             // Calculate stats
             const criticalCount = findings.filter(f => 
-                f.type.includes('Live') || f.type.includes('Private') || f.type.includes('AWS')
+                f.type.includes('Live') || f.type.includes('Private') || f.type.includes('AWS Secret')
             ).length;
 
             statsContainer.innerHTML = `
@@ -732,21 +757,24 @@ const API_KEY = process.env.STRIPE_API_KEY;</div>
                 ${criticalCount > 0 ? `<span class="stat-badge stat-warning">🔥 ${criticalCount} critical</span>` : ''}
             `;
 
-            // Display findings
+            // Display findings (with safe HTML escaping)
             findingsContainer.innerHTML = findings.map(finding => {
-                const highlightedContent = finding.content.replace(
-                    finding.match,
-                    `<span class="secret-highlight">${escapeHtml(finding.match)}</span>`
+                const escapedMatch = escapeHtml(finding.match);
+                const escapedContent = escapeHtml(finding.content);
+                // Highlight the secret in the escaped content
+                const highlightedContent = escapedContent.replace(
+                    new RegExp(escapedMatch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'),
+                    `<span class="secret-highlight">${escapedMatch}</span>`
                 );
 
                 return `
                     <div class="finding">
                         <div class="finding-header">
-                            <span class="finding-type">🔴 ${finding.type}</span>
+                            <span class="finding-type">🔴 ${escapeHtml(finding.type)}</span>
                             <span class="finding-line">Line ${finding.line}</span>
                         </div>
                         <p style="color: var(--color-text-secondary); font-size: 13px; margin-bottom: 4px;">
-                            ${finding.description}
+                            ${escapeHtml(finding.description)}
                         </p>
                         ${finding.entropy ? `<p class="entropy-info">Entropy: ${finding.entropy} bits</p>` : ''}
                         <div class="finding-content">${highlightedContent}</div>
@@ -754,8 +782,10 @@ const API_KEY = process.env.STRIPE_API_KEY;</div>
                 `;
             }).join('');
 
-            // Scroll to results
-            resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            // Scroll to results smoothly
+            setTimeout(() => {
+                resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
         }
 
         // Helper function to escape HTML
@@ -771,7 +801,7 @@ const API_KEY = process.env.STRIPE_API_KEY;</div>
             document.getElementById('resultsSection').style.display = 'none';
         }
 
-        // Load sample data
+        // Load sample data (with auto-scan)
         function loadSample(type) {
             const samples = {
                 aws: `# AWS Configuration
@@ -828,10 +858,25 @@ export const config = {
             };
 
             document.getElementById('codeInput').value = samples[type] || '';
+            // Auto-trigger scan for better testing UX
+            scanCode();
         }
 
-        // Auto-focus on text area
-        document.getElementById('codeInput').focus();
+        // Keyboard shortcuts and initialization
+        document.addEventListener('DOMContentLoaded', () => {
+            const textarea = document.getElementById('codeInput');
+            
+            // Ctrl/Cmd + Enter to scan
+            textarea.addEventListener('keydown', (e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                    e.preventDefault();
+                    scanCode();
+                }
+            });
+            
+            // Auto-focus
+            textarea.focus();
+        });
     </script>
 </body>
 </html>
