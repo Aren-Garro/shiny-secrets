@@ -1,0 +1,48 @@
+{
+  "name": "shiny-secrets",
+  "version": "1.0.0",
+  "description": "Free open-source tool to detect hardcoded secrets and credentials in your code",
+  "main": "scanner.js",
+  "bin": {
+    "shiny-secrets": "./scanner.js"
+  },
+  "scripts": {
+    "test": "node test.js",
+    "scan": "node scanner.js"
+  },
+  "keywords": [
+    "security",
+    "secrets",
+    "scanning",
+    "credentials",
+    "api-keys",
+    "tokens",
+    "static-analysis",
+    "code-security",
+    "secret-detection",
+    "aws",
+    "github",
+    "stripe",
+    "cli",
+    "git-hooks"
+  ],
+  "author": "Aren Garro LLC",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Aren-Garro/shiny-secrets.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Aren-Garro/shiny-secrets/issues"
+  },
+  "homepage": "https://aren-garro.github.io/shiny-secrets/",
+  "engines": {
+    "node": ">=12.0.0"
+  },
+  "files": [
+    "scanner.js",
+    "pre-commit",
+    "README.md",
+    "LICENSE"
+  ]
+}
