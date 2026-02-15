@@ -138,6 +138,13 @@
             background: var(--color-bg-primary);
         }
 
+        .keyboard-hint {
+            font-size: 13px;
+            color: var(--color-text-secondary);
+            margin-top: 8px;
+            font-style: italic;
+        }
+
         .results-section {
             background: var(--color-bg-secondary);
             border-radius: 12px;
@@ -151,12 +158,19 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 16px;
         }
 
         .result-stats {
             display: flex;
             gap: 20px;
             flex-wrap: wrap;
+        }
+
+        .result-actions {
+            display: flex;
+            gap: 12px;
         }
 
         .stat-badge {
@@ -182,6 +196,23 @@
             background: rgba(245, 158, 11, 0.2);
             color: var(--color-warning);
             border: 1px solid var(--color-warning);
+        }
+
+        .btn-copy {
+            padding: 8px 16px;
+            font-size: 14px;
+            background: var(--color-bg-tertiary);
+            color: var(--color-text-primary);
+            border: 1px solid var(--color-border);
+        }
+
+        .btn-copy:hover {
+            background: var(--color-bg-primary);
+        }
+
+        .btn-copy.copied {
+            background: var(--color-success);
+            color: white;
         }
 
         .finding {
@@ -290,26 +321,74 @@
 
         .pattern-list {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            grid-template-columns: 1fr;
             gap: 12px;
             margin-top: 16px;
         }
 
-        .pattern-item {
+        .pattern-group {
             background: var(--color-bg-tertiary);
-            padding: 12px;
-            border-radius: 6px;
-            font-size: 14px;
+            padding: 16px;
+            border-radius: 8px;
+        }
+
+        .pattern-group-title {
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--color-accent);
+            margin-bottom: 8px;
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
-        .pattern-icon {
-            width: 8px;
-            height: 8px;
+        .pattern-group-icon {
+            width: 10px;
+            height: 10px;
             background: var(--color-accent);
             border-radius: 50%;
+        }
+
+        .pattern-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .pattern-tag {
+            background: var(--color-bg-primary);
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: var(--color-text-secondary);
+            border: 1px solid var(--color-border);
+        }
+
+        .offline-usage {
+            background: var(--color-bg-secondary);
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid var(--color-border);
+            margin-top: 20px;
+        }
+
+        .offline-usage h3 {
+            color: var(--color-accent);
+            margin-bottom: 16px;
+        }
+
+        .privacy-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--color-success);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 12px;
         }
 
         .no-results {
@@ -390,6 +469,12 @@
         <header>
             <h1>🔍 Secret Scanner</h1>
             <p class="subtitle">Free open-source tool to detect hardcoded secrets and credentials in your code</p>
+            <div class="privacy-badge">
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                </svg>
+                100% Client-Side • Zero Network Calls • Your Code Never Leaves Your Browser
+            </div>
         </header>
 
         <div class="main-grid">
@@ -405,6 +490,7 @@ const github_token = 'ghp_16C7e42F292c6912E7710c838347Ae178B4a';"></textarea>
                     <button class="btn-primary" onclick="scanCode()">🔍 Scan for Secrets</button>
                     <button class="btn-secondary" onclick="clearAll()">Clear</button>
                 </div>
+                <p class="keyboard-hint">💡 Tip: Press Ctrl+Enter (or Cmd+Enter on Mac) to scan</p>
                 <div class="test-samples">
                     <p style="color: var(--color-text-secondary); font-size: 14px; margin-bottom: 8px;">Quick Test Samples:</p>
                     <button class="btn-secondary sample-btn" onclick="loadSample('aws')">AWS Keys</button>
@@ -420,18 +506,76 @@ const github_token = 'ghp_16C7e42F292c6912E7710c838347Ae178B4a';"></textarea>
                     This scanner detects <strong>20+ common secret types</strong> using regex patterns and Shannon entropy analysis.
                 </p>
                 <div class="pattern-list">
-                    <div class="pattern-item"><span class="pattern-icon"></span> AWS Access Keys</div>
-                    <div class="pattern-item"><span class="pattern-icon"></span> Stripe API Keys</div>
-                    <div class="pattern-item"><span class="pattern-icon"></span> GitHub Tokens</div>
-                    <div class="pattern-item"><span class="pattern-icon"></span> Google API Keys</div>
-                    <div class="pattern-item"><span class="pattern-icon"></span> Slack Tokens</div>
-                    <div class="pattern-item"><span class="pattern-icon"></span> JWT Tokens</div>
-                    <div class="pattern-item"><span class="pattern-icon"></span> Private Keys</div>
-                    <div class="pattern-item"><span class="pattern-icon"></span> Database URLs</div>
-                    <div class="pattern-item"><span class="pattern-icon"></span> OAuth Tokens</div>
-                    <div class="pattern-item"><span class="pattern-icon"></span> API Secrets</div>
-                    <div class="pattern-item"><span class="pattern-icon"></span> Password Fields</div>
-                    <div class="pattern-item"><span class="pattern-icon"></span> High Entropy Strings</div>
+                    <div class="pattern-group">
+                        <div class="pattern-group-title">
+                            <span class="pattern-group-icon"></span>
+                            Cloud Providers
+                        </div>
+                        <div class="pattern-items">
+                            <span class="pattern-tag">AWS Access Keys</span>
+                            <span class="pattern-tag">Azure Keys</span>
+                            <span class="pattern-tag">Google API Keys</span>
+                        </div>
+                    </div>
+                    
+                    <div class="pattern-group">
+                        <div class="pattern-group-title">
+                            <span class="pattern-group-icon"></span>
+                            Payment & Communication APIs
+                        </div>
+                        <div class="pattern-items">
+                            <span class="pattern-tag">Stripe Keys</span>
+                            <span class="pattern-tag">SendGrid Keys</span>
+                            <span class="pattern-tag">Twilio Keys</span>
+                            <span class="pattern-tag">Slack Tokens</span>
+                        </div>
+                    </div>
+                    
+                    <div class="pattern-group">
+                        <div class="pattern-group-title">
+                            <span class="pattern-group-icon"></span>
+                            Version Control
+                        </div>
+                        <div class="pattern-items">
+                            <span class="pattern-tag">GitHub Tokens</span>
+                            <span class="pattern-tag">GitLab Keys</span>
+                        </div>
+                    </div>
+                    
+                    <div class="pattern-group">
+                        <div class="pattern-group-title">
+                            <span class="pattern-group-icon"></span>
+                            Authentication
+                        </div>
+                        <div class="pattern-items">
+                            <span class="pattern-tag">JWT Tokens</span>
+                            <span class="pattern-tag">OAuth Tokens</span>
+                            <span class="pattern-tag">Bearer Tokens</span>
+                        </div>
+                    </div>
+                    
+                    <div class="pattern-group">
+                        <div class="pattern-group-title">
+                            <span class="pattern-group-icon"></span>
+                            Databases & Credentials
+                        </div>
+                        <div class="pattern-items">
+                            <span class="pattern-tag">Database URLs</span>
+                            <span class="pattern-tag">Private Keys</span>
+                            <span class="pattern-tag">Passwords</span>
+                        </div>
+                    </div>
+                    
+                    <div class="pattern-group">
+                        <div class="pattern-group-title">
+                            <span class="pattern-group-icon"></span>
+                            Advanced Detection
+                        </div>
+                        <div class="pattern-items">
+                            <span class="pattern-tag">High Entropy Strings</span>
+                            <span class="pattern-tag">Generic API Keys</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -443,10 +587,34 @@ const github_token = 'ghp_16C7e42F292c6912E7710c838347Ae178B4a';"></textarea>
 
         <div class="results-section" id="resultsSection" style="display: none;">
             <div class="result-header">
-                <h2>Scan Results</h2>
-                <div class="result-stats" id="resultStats"></div>
+                <div>
+                    <h2 style="margin-bottom: 12px;">Scan Results</h2>
+                    <div class="result-stats" id="resultStats"></div>
+                </div>
+                <div class="result-actions" id="resultActions" style="display: none;">
+                    <button class="btn-copy" onclick="copyResults()" id="copyBtn">📋 Copy Results</button>
+                </div>
             </div>
             <div id="findingsContainer"></div>
+        </div>
+
+        <div class="offline-usage">
+            <h3>📥 Use Offline (Zero Network Access)</h3>
+            <p style="color: var(--color-text-secondary); margin-bottom: 16px;">
+                This tool runs <strong>completely in your browser</strong> with no server communication. You can download and use it offline:
+            </p>
+            <ol style="color: var(--color-text-secondary); margin-left: 20px; line-height: 1.8;">
+                <li>Right-click this page and select "Save As" or use Ctrl+S</li>
+                <li>Save as <code style="background: var(--color-bg-tertiary); padding: 2px 6px; border-radius: 3px;">secret-scanner.html</code></li>
+                <li>Open the saved file in any browser - works completely offline</li>
+                <li>Your code never touches a server, database, or network</li>
+            </ol>
+            <div style="margin-top: 16px; padding: 16px; background: var(--color-bg-tertiary); border-radius: 8px; border-left: 4px solid var(--color-accent);">
+                <p style="color: var(--color-text-primary); font-weight: 600; margin-bottom: 8px;">🔐 Privacy Guarantee</p>
+                <p style="color: var(--color-text-secondary); font-size: 14px;">
+                    No analytics, no tracking, no telemetry, no external requests. Open the browser dev console and watch the Network tab - you'll see zero outbound requests during scanning.
+                </p>
+            </div>
         </div>
 
         <div class="quickstart">
@@ -463,14 +631,14 @@ const github_token = 'ghp_16C7e42F292c6912E7710c838347Ae178B4a';"></textarea>
                     <div class="step-number">2</div>
                     <div class="step-content">
                         <h4>Run the Scanner</h4>
-                        <p>Click "Scan for Secrets" to analyze your code for hardcoded credentials and API keys.</p>
+                        <p>Click "Scan for Secrets" (or press Ctrl+Enter) to analyze your code for hardcoded credentials and API keys.</p>
                     </div>
                 </div>
                 <div class="step">
                     <div class="step-number">3</div>
                     <div class="step-content">
                         <h4>Review Findings</h4>
-                        <p>Each detected secret shows the type, location (line number), and the exact match.</p>
+                        <p>Each detected secret shows the type, location (line number), and the exact match. Use "Copy Results" to share with your team.</p>
                     </div>
                 </div>
                 <div class="step">
@@ -564,8 +732,8 @@ const API_KEY = process.env.STRIPE_API_KEY;</div>
             },
             password_field: {
                 name: 'Password in Code',
-                regex: /(?:password|passwd|pwd)\s*[:=]\s*['"]([^'"]{6,})['"]?/gi,
-                description: 'Password Assignment'
+                regex: /(?:password|passwd|pwd)\s*[:=]\s*['"]([^'"]{8,})['"]?/gi,
+                description: 'Password Assignment (8+ chars)'
             },
             bearer_token: {
                 name: 'Bearer Token',
@@ -594,8 +762,8 @@ const API_KEY = process.env.STRIPE_API_KEY;</div>
             },
             heroku_api_key: {
                 name: 'Heroku API Key',
-                regex: /[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/g,
-                description: 'Heroku API Key (UUID format)'
+                regex: /(?:heroku|HEROKU)[_-]?(?:api[_-]?)?(?:key|token)\s*[:=]\s*['"]?([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})['"]?/gi,
+                description: 'Heroku API Key with context'
             }
         };
 
@@ -725,16 +893,56 @@ const API_KEY = process.env.STRIPE_API_KEY;</div>
             }, 300);
         }
 
+        // Copy results to clipboard
+        function copyResults() {
+            const findings = window.lastFindings || [];
+            if (findings.length === 0) {
+                alert('No results to copy!');
+                return;
+            }
+
+            let text = `Secret Scanner Results\n`;
+            text += `======================\n\n`;
+            text += `Total secrets found: ${findings.length}\n\n`;
+            
+            findings.forEach((finding, index) => {
+                text += `${index + 1}. ${finding.type}\n`;
+                text += `   Line: ${finding.line}\n`;
+                text += `   Match: ${finding.match}\n`;
+                if (finding.entropy) {
+                    text += `   Entropy: ${finding.entropy} bits\n`;
+                }
+                text += `   Code: ${finding.content}\n\n`;
+            });
+
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.getElementById('copyBtn');
+                btn.textContent = '✅ Copied!';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = '📋 Copy Results';
+                    btn.classList.remove('copied');
+                }, 2000);
+            }).catch(() => {
+                alert('Failed to copy to clipboard. Please try again.');
+            });
+        }
+
         // Display results (bug-fixed and optimized)
         function displayResults(findings) {
+            // Store findings for copy function
+            window.lastFindings = findings;
+
             const resultsSection = document.getElementById('resultsSection');
             const statsContainer = document.getElementById('resultStats');
             const findingsContainer = document.getElementById('findingsContainer');
+            const resultActions = document.getElementById('resultActions');
 
             resultsSection.style.display = 'block';
 
             if (findings.length === 0) {
                 statsContainer.innerHTML = '<span class="stat-badge stat-success">✓ No secrets detected</span>';
+                resultActions.style.display = 'none';
                 findingsContainer.innerHTML = `
                     <div class="no-results">
                         <svg fill="currentColor" viewBox="0 0 20 20">
@@ -746,6 +954,9 @@ const API_KEY = process.env.STRIPE_API_KEY;</div>
                 `;
                 return;
             }
+
+            // Show copy button
+            resultActions.style.display = 'flex';
 
             // Calculate stats
             const criticalCount = findings.filter(f => 
@@ -801,7 +1012,7 @@ const API_KEY = process.env.STRIPE_API_KEY;</div>
             document.getElementById('resultsSection').style.display = 'none';
         }
 
-        // Load sample data (with auto-scan)
+        // Load sample data (WITHOUT auto-scan for better UX)
         function loadSample(type) {
             const samples = {
                 aws: `# AWS Configuration
@@ -858,8 +1069,7 @@ export const config = {
             };
 
             document.getElementById('codeInput').value = samples[type] || '';
-            // Auto-trigger scan for better testing UX
-            scanCode();
+            // Removed auto-scan - let users read the sample first
         }
 
         // Keyboard shortcuts and initialization
