@@ -1,14 +1,17 @@
 {
   "name": "shiny-secrets",
-  "version": "1.0.0",
-  "description": "Free open-source tool to detect hardcoded secrets and credentials in your code",
+  "version": "2.0.0",
+  "description": "Fast, lightweight secret scanner with 21+ detection patterns, entropy analysis, and zero dependencies. Detect hardcoded API keys, tokens, and credentials before they reach production.",
   "main": "scanner.js",
   "bin": {
-    "shiny-secrets": "./scanner.js"
+    "shiny-secrets": "./scanner.js",
+    "shiny-secrets-v2": "./scanner-v2.js"
   },
   "scripts": {
     "test": "node test.js",
-    "scan": "node scanner.js"
+    "scan": "node scanner.js",
+    "scan:v2": "node scanner-v2.js",
+    "prepublishOnly": "npm test"
   },
   "keywords": [
     "security",
@@ -23,10 +26,18 @@
     "aws",
     "github",
     "stripe",
+    "google",
+    "slack",
+    "sendgrid",
     "cli",
-    "git-hooks"
+    "git-hooks",
+    "pre-commit",
+    "ci-cd",
+    "sarif",
+    "entropy",
+    "devsecops"
   ],
-  "author": "Aren Garro LLC",
+  "author": "Aren Garro LLC <contact@arengarro.com>",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -37,12 +48,24 @@
   },
   "homepage": "https://aren-garro.github.io/shiny-secrets/",
   "engines": {
-    "node": ">=12.0.0"
+    "node": ">=14.0.0"
   },
   "files": [
     "scanner.js",
-    "pre-commit",
+    "scanner-v2.js",
+    "pre-commit.sh",
+    ".shinysecretsrc.example",
     "README.md",
     "LICENSE"
-  ]
+  ],
+  "preferGlobal": true,
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/Aren-Garro"
+  }
 }
