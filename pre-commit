@@ -1,0 +1,68 @@
+#!/bin/bash
+
+# Shiny Secrets Pre-Commit Hook
+# Scans staged files for hardcoded secrets before allowing commit
+# 
+# Installation:
+#   cp pre-commit .git/hooks/pre-commit
+#   chmod +x .git/hooks/pre-commit
+#
+# Or use the install script:
+#   curl -o .git/hooks/pre-commit https://raw.githubusercontent.com/Aren-Garro/shiny-secrets/main/pre-commit
+#   chmod +x .git/hooks/pre-commit
+
+set -e
+
+echo "🔍 Scanning staged files for secrets..."
+echo ""
+
+# Check if Node.js is installed
+if ! command -v node &> /dev/null; then
+    echo "⚠️  Warning: Node.js not found. Skipping secret scan."
+    echo "   Install Node.js to enable automatic secret scanning."
+    exit 0
+fi
+
+# Determine scanner location
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+SCANNER_PATH=""
+
+# Look for scanner in multiple locations
+if [ -f "$REPO_ROOT/scanner.js" ]; then
+    SCANNER_PATH="$REPO_ROOT/scanner.js"
+elif [ -f "$REPO_ROOT/node_modules/.bin/shiny-secrets" ]; then
+    SCANNER_PATH="$REPO_ROOT/node_modules/.bin/shiny-secrets"
+elif command -v shiny-secrets &> /dev/null; then
+    SCANNER_PATH="shiny-secrets"
+else
+    # Download scanner if not found
+    echo "📥 Scanner not found locally. Downloading..."
+    SCANNER_PATH="$REPO_ROOT/.git/hooks/scanner.js"
+    curl -s https://raw.githubusercontent.com/Aren-Garro/shiny-secrets/main/scanner.js -o "$SCANNER_PATH"
+    if [ $? -ne 0 ]; then
+        echo "⚠️  Warning: Could not download scanner. Skipping secret scan."
+        exit 0
+    fi
+fi
+
+# Run scanner on staged files
+if node "$SCANNER_PATH" --scan-staged --fail-on-critical 2>&1; then
+    echo ""
+    echo "✅ No secrets detected. Proceeding with commit."
+    exit 0
+else
+    EXIT_CODE=$?
+    echo ""
+    echo "❌ Secrets detected! Commit blocked."
+    echo ""
+    echo "To fix:"
+    echo "  1. Remove the hardcoded secrets from your code"
+    echo "  2. Use environment variables or secret management instead"
+    echo "  3. Stage your changes again and retry the commit"
+    echo ""
+    echo "To bypass this check (NOT recommended):"
+    echo "  git commit --no-verify"
+    echo ""
+    exit $EXIT_CODE
+fi
