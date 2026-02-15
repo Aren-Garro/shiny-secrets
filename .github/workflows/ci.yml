@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Test Suite
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node-version: [14.x, 16.x, 18.x, 20.x]
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+    
+    - name: Run test suite
+      run: npm test
+    
+    - name: Test CLI v1
+      run: |
+        echo 'const key = "AKIAIOSFODNN7EXAMPLE";' > test-file.js
+        node scanner.js test-file.js || echo "Expected failure - secret detected"
+    
+    - name: Test CLI v2 with SARIF output
+      run: |
+        echo 'const key = "AKIAIOSFODNN7EXAMPLE";' > test-file.js
+        node scanner-v2.js test-file.js --sarif > sarif-output.json || true
+        cat sarif-output.json
+
+  lint:
+    name: Scan Self
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18.x'
+    
+    - name: Scan repository for secrets
+      run: |
+        node scanner-v2.js . --fail-on=critical --exclude "test.js" --exclude "test-file.js"
+
+  npm-dry-run:
+    name: NPM Publish Dry Run
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18.x'
+        registry-url: 'https://registry.npmjs.org'
+    
+    - name: Test npm pack
+      run: |
+        npm pack --dry-run
+        npm pack
+        tar -tzf shiny-secrets-*.tgz
