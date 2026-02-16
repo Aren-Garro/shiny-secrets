@@ -10,9 +10,6 @@
   },
   "scripts": {
     "test": "jest",
-    "test:legacy": "node test.js && node test-v2.js",
-    "test:v1": "node test.js",
-    "test:v2": "node test-v2.js",
     "test:coverage": "jest --coverage",
     "test:watch": "jest --watch",
     "scan": "node scanner.js",
