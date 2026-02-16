@@ -32,33 +32,15 @@ const colors = {
     bold: '\x1b[1m'
 };
 
-// Import patterns from scanner.js
-const patterns = require('./scanner.js').patterns || {
-    aws_access_key: {
-        name: 'AWS Access Key',
-        regex: /AKIA[0-9A-Z]{16}/g,
-        description: 'AWS Access Key ID',
-        severity: 'CRITICAL'
-    },
-    aws_secret_key: {
-        name: 'AWS Secret Key',
-        regex: /aws_secret_access_key\s*=\s*['"]?([A-Za-z0-9/+=]{40})['"]?/gi,
-        description: 'AWS Secret Access Key',
-        severity: 'CRITICAL'
-    },
-    stripe_live_key: {
-        name: 'Stripe Live API Key',
-        regex: /sk_live_[0-9a-zA-Z]{24,}/g,
-        description: 'Stripe Secret Live Key',
-        severity: 'CRITICAL'
-    },
-    github_token: {
-        name: 'GitHub Token',
-        regex: /ghp_[a-zA-Z0-9]{36,}/g,
-        description: 'GitHub Personal Access Token',
-        severity: 'CRITICAL'
-    }
-};
+const {
+    patterns,
+    calculateEntropy,
+    scanPatterns,
+    scanEntropy,
+    deduplicateFindings,
+    sortFindings,
+    shouldScanFile
+} = require('./lib/core');
 
 // Default configuration
 const defaultConfig = {
@@ -283,22 +265,6 @@ function scanDirectory(dirPath, config, results = []) {
     return results;
 }
 
-// Shannon entropy calculation
-function calculateEntropy(str) {
-    if (!str || str.length < 8) return 0;
-    const len = str.length;
-    const freq = {};
-    for (let i = 0; i < len; i++) {
-        freq[str[i]] = (freq[str[i]] || 0) + 1;
-    }
-    let entropy = 0;
-    for (let char in freq) {
-        const p = freq[char] / len;
-        entropy -= p * Math.log2(p);
-    }
-    return entropy;
-}
-
 // Check if finding is allowlisted
 function isAllowlisted(finding, config) {
     // Check baseline allowlist
@@ -315,105 +281,25 @@ function isAllowlisted(finding, config) {
 
 // Main scan function
 function scanContent(content, filename = 'input', config = defaultConfig) {
-    const findings = [];
-    const lines = content.split('\n');
+    let findings = [];
 
-    // Apply regex patterns
-    for (let [key, pattern] of Object.entries(patterns)) {
-        // Skip disabled patterns
-        if (config.disabledPatterns.includes(key)) continue;
-        
-        lines.forEach((line, index) => {
-            const localRegex = new RegExp(pattern.regex.source, pattern.regex.flags);
-            let match;
-            while ((match = localRegex.exec(line)) !== null) {
-                const matchValue = match[1] || match[0];
-                const finding = {
-                    type: pattern.name,
-                    line: index + 1,
-                    column: match.index + 1,
-                    match: matchValue,
-                    content: line.trim(),
-                    description: pattern.description,
-                    severity: pattern.severity,
-                    file: filename
-                };
-                
-                if (!isAllowlisted(finding, config)) {
-                    findings.push(finding);
-                }
-                
-                if (match.index === localRegex.lastIndex) {
-                    localRegex.lastIndex++;
-                }
-            }
-        });
-    }
+    findings.push(...scanPatterns(content, {
+        filename,
+        disabledPatterns: config.disabledPatterns || []
+    }));
 
-    // Apply entropy detection if enabled
     if (config.entropy.enabled) {
-        lines.forEach((line, index) => {
-            if (/^[\s#\/\*]*(?:import|function|class|if|for|while)\b/.test(line)) {
-                return;
-            }
-            
-            const tokens = line.split(/[\s'"=:,;(){}[\]<>]/);
-            
-            for (let token of tokens) {
-                if (token.length >= config.entropy.minLength && token.length <= config.entropy.maxLength && /[a-zA-Z0-9]/.test(token)) {
-                    if (/^(http|https|www|localhost|127\.0\.0\.1)/.test(token)) continue;
-                    if (/^\d+$/.test(token)) continue;
-                    
-                    // Check allow patterns
-                    let skip = false;
-                    for (const pattern of config.allowPatterns) {
-                        if (token.toLowerCase().includes(pattern.toLowerCase())) {
-                            skip = true;
-                            break;
-                        }
-                    }
-                    if (skip) continue;
-                    
-                    const entropy = calculateEntropy(token);
-                    if (entropy >= config.entropy.threshold && !/^[a-z]+$/.test(token)) {
-                        const finding = {
-                            type: 'High Entropy String',
-                            line: index + 1,
-                            column: line.indexOf(token) + 1,
-                            match: token,
-                            content: line.trim(),
-                            entropy: entropy.toFixed(2),
-                            description: 'Potential secret with high randomness',
-                            severity: 'MEDIUM',
-                            file: filename
-                        };
-                        
-                        if (!isAllowlisted(finding, config)) {
-                            findings.push(finding);
-                        }
-                    }
-                }
-            }
-        });
+        findings.push(...scanEntropy(content, {
+            filename,
+            minLength: config.entropy.minLength,
+            maxLength: config.entropy.maxLength,
+            threshold: config.entropy.threshold,
+            allowPatterns: config.allowPatterns || []
+        }));
     }
 
-    // Remove duplicates
-    const uniqueFindings = [];
-    const seen = new Set();
-    for (let finding of findings) {
-        const key = `${finding.file}|${finding.type}|${finding.line}|${finding.match}`;
-        if (!seen.has(key)) {
-            seen.add(key);
-            uniqueFindings.push(finding);
-        }
-    }
-
-    uniqueFindings.sort((a, b) => {
-        if (a.file !== b.file) return a.file.localeCompare(b.file);
-        return a.line - b.line;
-    });
-    
-    return uniqueFindings;
+    findings = findings.filter(finding => !isAllowlisted(finding, config));
+    return sortFindings(deduplicateFindings(findings));
 }
 
 // Filter findings by severity threshold
