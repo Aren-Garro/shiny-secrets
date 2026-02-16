@@ -6,56 +6,41 @@
     <title>Secret Scanner - Free Security Tool</title>
     <style>
         :root {
-            --color-bg-primary: #0f172a;
-            --color-bg-secondary: #1e293b;
-            --color-bg-tertiary: #334155;
-            --color-text-primary: #f1f5f9;
-            --color-text-secondary: #cbd5e1;
-            --color-accent: #38bdf8;
-            --color-success: #22c55e;
-            --color-warning: #f59e0b;
-            --color-danger: #ef4444;
-            --color-border: rgba(148, 163, 184, 0.2);
+            --bg-1: #0f172a;
+            --bg-2: #1e293b;
+            --bg-3: #334155;
+            --text-1: #f1f5f9;
+            --text-2: #cbd5e1;
+            --accent: #38bdf8;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --border: rgba(148, 163, 184, 0.2);
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-            background: var(--color-bg-primary);
-            color: var(--color-text-primary);
+            background: var(--bg-1);
+            color: var(--text-1);
             line-height: 1.6;
             padding: 20px;
         }
 
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
+        .container { max-width: 1400px; margin: 0 auto; }
 
         header {
             text-align: center;
             margin-bottom: 40px;
             padding: 30px 20px;
-            background: var(--color-bg-secondary);
+            background: var(--bg-2);
             border-radius: 12px;
-            border: 1px solid var(--color-border);
+            border: 1px solid var(--border);
         }
 
-        h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            color: var(--color-accent);
-        }
-
-        .subtitle {
-            color: var(--color-text-secondary);
-            font-size: 1.1rem;
-        }
+        h1 { font-size: 2.5rem; margin-bottom: 10px; color: var(--accent); }
+        .subtitle { color: var(--text-2); font-size: 1.1rem; }
 
         .main-grid {
             display: grid;
@@ -65,30 +50,24 @@
         }
 
         @media (max-width: 968px) {
-            .main-grid {
-                grid-template-columns: 1fr;
-            }
+            .main-grid { grid-template-columns: 1fr; }
         }
 
         .card {
-            background: var(--color-bg-secondary);
+            background: var(--bg-2);
             border-radius: 12px;
             padding: 24px;
-            border: 1px solid var(--color-border);
+            border: 1px solid var(--border);
         }
 
-        .card h2 {
-            margin-bottom: 16px;
-            color: var(--color-accent);
-            font-size: 1.5rem;
-        }
+        .card h2 { margin-bottom: 16px; color: var(--accent); font-size: 1.5rem; }
 
         textarea {
             width: 100%;
             min-height: 300px;
-            background: var(--color-bg-tertiary);
-            color: var(--color-text-primary);
-            border: 1px solid var(--color-border);
+            background: var(--bg-3);
+            color: var(--text-1);
+            border: 1px solid var(--border);
             border-radius: 8px;
             padding: 12px;
             font-family: 'Courier New', monospace;
@@ -96,17 +75,9 @@
             resize: vertical;
         }
 
-        textarea:focus {
-            outline: 2px solid var(--color-accent);
-            outline-offset: 2px;
-        }
+        textarea:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-        .button-group {
-            display: flex;
-            gap: 12px;
-            margin-top: 16px;
-            flex-wrap: wrap;
-        }
+        .button-group { display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
 
         button {
             padding: 12px 24px;
@@ -118,38 +89,18 @@
             transition: all 0.2s;
         }
 
-        .btn-primary {
-            background: var(--color-accent);
-            color: var(--color-bg-primary);
-        }
+        .btn-primary { background: var(--accent); color: var(--bg-1); }
+        .btn-primary:hover { background: #0ea5e9; transform: translateY(-1px); }
+        .btn-secondary { background: var(--bg-3); color: var(--text-1); border: 1px solid var(--border); }
+        .btn-secondary:hover { background: var(--bg-1); }
 
-        .btn-primary:hover {
-            background: #0ea5e9;
-            transform: translateY(-1px);
-        }
-
-        .btn-secondary {
-            background: var(--color-bg-tertiary);
-            color: var(--color-text-primary);
-            border: 1px solid var(--color-border);
-        }
-
-        .btn-secondary:hover {
-            background: var(--color-bg-primary);
-        }
-
-        .keyboard-hint {
-            font-size: 13px;
-            color: var(--color-text-secondary);
-            margin-top: 8px;
-            font-style: italic;
-        }
+        .keyboard-hint { font-size: 13px; color: var(--text-2); margin-top: 8px; font-style: italic; }
 
         .results-section {
-            background: var(--color-bg-secondary);
+            background: var(--bg-2);
             border-radius: 12px;
             padding: 24px;
-            border: 1px solid var(--color-border);
+            border: 1px solid var(--border);
             margin-top: 20px;
         }
 
@@ -162,87 +113,32 @@
             gap: 16px;
         }
 
-        .result-stats {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
+        .result-stats { display: flex; gap: 20px; flex-wrap: wrap; }
+        .result-actions { display: flex; gap: 12px; }
 
-        .result-actions {
-            display: flex;
-            gap: 12px;
-        }
+        .stat-badge { padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 14px; }
+        .stat-danger { background: rgba(239, 68, 68, 0.2); color: var(--danger); border: 1px solid var(--danger); }
+        .stat-success { background: rgba(34, 197, 94, 0.2); color: var(--success); border: 1px solid var(--success); }
+        .stat-warning { background: rgba(245, 158, 11, 0.2); color: var(--warning); border: 1px solid var(--warning); }
 
-        .stat-badge {
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        .stat-danger {
-            background: rgba(239, 68, 68, 0.2);
-            color: var(--color-danger);
-            border: 1px solid var(--color-danger);
-        }
-
-        .stat-success {
-            background: rgba(34, 197, 94, 0.2);
-            color: var(--color-success);
-            border: 1px solid var(--color-success);
-        }
-
-        .stat-warning {
-            background: rgba(245, 158, 11, 0.2);
-            color: var(--color-warning);
-            border: 1px solid var(--color-warning);
-        }
-
-        .btn-copy {
-            padding: 8px 16px;
-            font-size: 14px;
-            background: var(--color-bg-tertiary);
-            color: var(--color-text-primary);
-            border: 1px solid var(--color-border);
-        }
-
-        .btn-copy:hover {
-            background: var(--color-bg-primary);
-        }
-
-        .btn-copy.copied {
-            background: var(--color-success);
-            color: white;
-        }
+        .btn-copy { padding: 8px 16px; font-size: 14px; background: var(--bg-3); color: var(--text-1); border: 1px solid var(--border); }
+        .btn-copy:hover { background: var(--bg-1); }
+        .btn-copy.copied { background: var(--success); color: white; }
 
         .finding {
-            background: var(--color-bg-tertiary);
-            border-left: 4px solid var(--color-danger);
+            background: var(--bg-3);
+            border-left: 4px solid var(--danger);
             padding: 16px;
             margin-bottom: 12px;
             border-radius: 6px;
         }
 
-        .finding-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-
-        .finding-type {
-            font-weight: 600;
-            color: var(--color-danger);
-            font-size: 14px;
-        }
-
-        .finding-line {
-            color: var(--color-text-secondary);
-            font-size: 13px;
-        }
+        .finding-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .finding-type { font-weight: 600; color: var(--danger); font-size: 14px; }
+        .finding-line { color: var(--text-2); font-size: 13px; }
 
         .finding-content {
-            background: var(--color-bg-primary);
+            background: var(--bg-1);
             padding: 12px;
             border-radius: 4px;
             font-family: 'Courier New', monospace;
@@ -251,12 +147,7 @@
             margin-top: 8px;
         }
 
-        .secret-highlight {
-            background: rgba(239, 68, 68, 0.3);
-            color: var(--color-danger);
-            padding: 2px 4px;
-            border-radius: 3px;
-        }
+        .secret-highlight { background: rgba(239, 68, 68, 0.3); color: var(--danger); padding: 2px 4px; border-radius: 3px; }
 
         .severity-badge {
             display: inline-flex;
@@ -268,150 +159,23 @@
             letter-spacing: 0.03em;
         }
 
-        .severity-critical {
-            background: rgba(239, 68, 68, 0.2);
-            color: #fca5a5;
-            border: 1px solid var(--color-danger);
-        }
+        .severity-critical { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid var(--danger); }
+        .severity-high { background: rgba(245, 158, 11, 0.2); color: #fcd34d; border: 1px solid var(--warning); }
+        .severity-medium { background: rgba(56, 189, 248, 0.2); color: #7dd3fc; border: 1px solid var(--accent); }
 
-        .severity-high {
-            background: rgba(245, 158, 11, 0.2);
-            color: #fcd34d;
-            border: 1px solid var(--color-warning);
-        }
-
-        .severity-medium {
-            background: rgba(56, 189, 248, 0.2);
-            color: #7dd3fc;
-            border: 1px solid var(--color-accent);
-        }
-
-        .quickstart {
-            background: var(--color-bg-secondary);
-            border-radius: 12px;
-            padding: 24px;
-            border: 1px solid var(--color-border);
-            margin-top: 20px;
-        }
-
-        .quickstart h3 {
-            color: var(--color-accent);
-            margin-bottom: 16px;
-        }
-
-        .quickstart-steps {
-            display: grid;
-            gap: 16px;
-        }
-
-        .step {
-            display: flex;
-            gap: 16px;
-        }
-
-        .step-number {
-            width: 32px;
-            height: 32px;
-            background: var(--color-accent);
-            color: var(--color-bg-primary);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            flex-shrink: 0;
-        }
-
-        .step-content {
-            flex: 1;
-        }
-
-        .step-content h4 {
-            margin-bottom: 6px;
-            color: var(--color-text-primary);
-        }
-
-        .step-content p {
-            color: var(--color-text-secondary);
-            font-size: 14px;
-        }
-
-        .code-block {
-            background: var(--color-bg-tertiary);
-            padding: 12px;
-            border-radius: 6px;
-            font-family: 'Courier New', monospace;
-            font-size: 13px;
-            overflow-x: auto;
-            margin-top: 8px;
-            border: 1px solid var(--color-border);
-        }
-
-        .pattern-list {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 12px;
-            margin-top: 16px;
-        }
-
-        .pattern-group {
-            background: var(--color-bg-tertiary);
-            padding: 16px;
-            border-radius: 8px;
-        }
-
-        .pattern-group-title {
-            font-weight: 600;
-            font-size: 15px;
-            color: var(--color-accent);
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .pattern-group-icon {
-            width: 10px;
-            height: 10px;
-            background: var(--color-accent);
-            border-radius: 50%;
-        }
-
-        .pattern-items {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 8px;
-        }
-
-        .pattern-tag {
-            background: var(--color-bg-primary);
-            padding: 6px 12px;
-            border-radius: 4px;
-            font-size: 13px;
-            color: var(--color-text-secondary);
-            border: 1px solid var(--color-border);
-        }
-
-        .offline-usage {
-            background: var(--color-bg-secondary);
-            border-radius: 12px;
-            padding: 24px;
-            border: 1px solid var(--color-border);
-            margin-top: 20px;
-        }
-
-        .offline-usage h3 {
-            color: var(--color-accent);
-            margin-bottom: 16px;
-        }
+        .pattern-list { display: grid; gap: 12px; margin-top: 16px; }
+        .pattern-group { background: var(--bg-3); padding: 16px; border-radius: 8px; }
+        .pattern-group-title { font-weight: 600; font-size: 15px; color: var(--accent); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+        .pattern-group-icon { width: 10px; height: 10px; background: var(--accent); border-radius: 50%; }
+        .pattern-items { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+        .pattern-tag { background: var(--bg-1); padding: 6px 12px; border-radius: 4px; font-size: 13px; color: var(--text-2); border: 1px solid var(--border); }
 
         .privacy-badge {
             display: inline-flex;
             align-items: center;
             gap: 8px;
             background: rgba(34, 197, 94, 0.15);
-            color: var(--color-success);
+            color: var(--success);
             padding: 8px 16px;
             border-radius: 6px;
             font-size: 14px;
@@ -419,49 +183,18 @@
             margin-top: 12px;
         }
 
-        .no-results {
-            text-align: center;
-            padding: 40px;
-            color: var(--color-text-secondary);
-        }
+        .no-results { text-align: center; padding: 40px; color: var(--text-2); }
+        .no-results svg { width: 64px; height: 64px; margin-bottom: 16px; opacity: 0.5; }
 
-        .no-results svg {
-            width: 64px;
-            height: 64px;
-            margin-bottom: 16px;
-            opacity: 0.5;
-        }
+        .entropy-info { font-size: 12px; color: var(--text-2); margin-top: 4px; }
+        .test-samples { margin-top: 16px; }
+        .sample-btn { padding: 8px 16px; font-size: 14px; margin-right: 8px; margin-bottom: 8px; }
 
-        .entropy-info {
-            font-size: 12px;
-            color: var(--color-text-secondary);
-            margin-top: 4px;
-        }
-
-        .test-samples {
-            margin-top: 16px;
-        }
-
-        .sample-btn {
-            padding: 8px 16px;
-            font-size: 14px;
-            margin-right: 8px;
-            margin-bottom: 8px;
-        }
-
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 20px;
-        }
-
-        .loading.active {
-            display: block;
-        }
-
+        .loading { display: none; text-align: center; padding: 20px; }
+        .loading.active { display: block; }
         .spinner {
-            border: 3px solid var(--color-bg-tertiary);
-            border-top: 3px solid var(--color-accent);
+            border: 3px solid var(--bg-3);
+            border-top: 3px solid var(--accent);
             border-radius: 50%;
             width: 40px;
             height: 40px;
@@ -474,22 +207,19 @@
             100% { transform: rotate(360deg); }
         }
 
-        .footer {
-            text-align: center;
-            margin-top: 40px;
-            padding: 20px;
-            color: var(--color-text-secondary);
-            font-size: 14px;
-        }
+        .quickstart, .offline-usage { background: var(--bg-2); border-radius: 12px; padding: 24px; border: 1px solid var(--border); margin-top: 20px; }
+        .quickstart h3, .offline-usage h3 { color: var(--accent); margin-bottom: 16px; }
+        .quickstart-steps { display: grid; gap: 16px; }
+        .step { display: flex; gap: 16px; }
+        .step-number { width: 32px; height: 32px; background: var(--accent); color: var(--bg-1); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; }
+        .step-content { flex: 1; }
+        .step-content h4 { margin-bottom: 6px; color: var(--text-1); }
+        .step-content p { color: var(--text-2); font-size: 14px; }
+        .code-block { background: var(--bg-3); padding: 12px; border-radius: 6px; font-family: 'Courier New', monospace; font-size: 13px; overflow-x: auto; margin-top: 8px; border: 1px solid var(--border); }
 
-        .footer a {
-            color: var(--color-accent);
-            text-decoration: none;
-        }
-
-        .footer a:hover {
-            text-decoration: underline;
-        }
+        .footer { text-align: center; margin-top: 40px; padding: 20px; color: var(--text-2); font-size: 14px; }
+        .footer a { color: var(--accent); text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -508,19 +238,14 @@
         <div class="main-grid">
             <div class="card">
                 <h2>Paste Your Code</h2>
-                <textarea id="codeInput" placeholder="Paste your code, configuration files, or any text containing potential secrets...
-
-Example:
-const AWS_KEY = 'AKIAIOSFODNN7EXAMPLE';
-const stripe_key = 'sk_live_4eC39HqLyjWDarjtT1zdp7dc';
-const github_token = 'ghp_16C7e42F292c6912E7710c838347Ae178B4a';"></textarea>
+                <textarea id="codeInput" placeholder="Paste your code, configuration files, or any text containing potential secrets...\n\nExample:\nconst AWS_KEY = 'AKIAIOSFODNN7EXAMPLE';\nconst stripe_key = 'sk_live_4eC39HqLyjWDarjtT1zdp7dc';\nconst github_token = 'ghp_16C7e42F292c6912E7710c838347Ae178B4a';"></textarea>
                 <div class="button-group">
                     <button class="btn-primary" onclick="scanCode()">🔍 Scan for Secrets</button>
                     <button class="btn-secondary" onclick="clearAll()">Clear</button>
                 </div>
                 <p class="keyboard-hint">💡 Tip: Press Ctrl+Enter (or Cmd+Enter on Mac) to scan</p>
                 <div class="test-samples">
-                    <p style="color: var(--color-text-secondary); font-size: 14px; margin-bottom: 8px;">Quick Test Samples:</p>
+                    <p style="color: var(--text-2); font-size: 14px; margin-bottom: 8px;">Quick Test Samples:</p>
                     <button class="btn-secondary sample-btn" onclick="loadSample('aws')">AWS Keys</button>
                     <button class="btn-secondary sample-btn" onclick="loadSample('stripe')">Stripe API</button>
                     <button class="btn-secondary sample-btn" onclick="loadSample('github')">GitHub Token</button>
@@ -530,27 +255,18 @@ const github_token = 'ghp_16C7e42F292c6912E7710c838347Ae178B4a';"></textarea>
 
             <div class="card">
                 <h2>Detection Patterns</h2>
-                <p style="color: var(--color-text-secondary); margin-bottom: 16px;">
-                    This scanner detects <strong>20+ common secret types</strong> using regex patterns and Shannon entropy analysis.
-                </p>
+                <p style="color: var(--text-2); margin-bottom: 16px;">Detects <strong>20+ common secret types</strong> using regex patterns and entropy analysis.</p>
                 <div class="pattern-list">
                     <div class="pattern-group">
-                        <div class="pattern-group-title">
-                            <span class="pattern-group-icon"></span>
-                            Cloud Providers
-                        </div>
+                        <div class="pattern-group-title"><span class="pattern-group-icon"></span>Cloud Providers</div>
                         <div class="pattern-items">
                             <span class="pattern-tag">AWS Access Keys</span>
                             <span class="pattern-tag">Azure Keys</span>
                             <span class="pattern-tag">Google API Keys</span>
                         </div>
                     </div>
-                    
                     <div class="pattern-group">
-                        <div class="pattern-group-title">
-                            <span class="pattern-group-icon"></span>
-                            Payment & Communication APIs
-                        </div>
+                        <div class="pattern-group-title"><span class="pattern-group-icon"></span>Payment & Communication</div>
                         <div class="pattern-items">
                             <span class="pattern-tag">Stripe Keys</span>
                             <span class="pattern-tag">SendGrid Keys</span>
@@ -558,47 +274,31 @@ const github_token = 'ghp_16C7e42F292c6912E7710c838347Ae178B4a';"></textarea>
                             <span class="pattern-tag">Slack Tokens</span>
                         </div>
                     </div>
-                    
                     <div class="pattern-group">
-                        <div class="pattern-group-title">
-                            <span class="pattern-group-icon"></span>
-                            Version Control
-                        </div>
+                        <div class="pattern-group-title"><span class="pattern-group-icon"></span>Version Control</div>
                         <div class="pattern-items">
                             <span class="pattern-tag">GitHub Tokens</span>
                             <span class="pattern-tag">GitLab Keys</span>
                         </div>
                     </div>
-                    
                     <div class="pattern-group">
-                        <div class="pattern-group-title">
-                            <span class="pattern-group-icon"></span>
-                            Authentication
-                        </div>
+                        <div class="pattern-group-title"><span class="pattern-group-icon"></span>Authentication</div>
                         <div class="pattern-items">
                             <span class="pattern-tag">JWT Tokens</span>
                             <span class="pattern-tag">OAuth Tokens</span>
                             <span class="pattern-tag">Bearer Tokens</span>
                         </div>
                     </div>
-                    
                     <div class="pattern-group">
-                        <div class="pattern-group-title">
-                            <span class="pattern-group-icon"></span>
-                            Databases & Credentials
-                        </div>
+                        <div class="pattern-group-title"><span class="pattern-group-icon"></span>Databases & Credentials</div>
                         <div class="pattern-items">
                             <span class="pattern-tag">Database URLs</span>
                             <span class="pattern-tag">Private Keys</span>
                             <span class="pattern-tag">Passwords</span>
                         </div>
                     </div>
-                    
                     <div class="pattern-group">
-                        <div class="pattern-group-title">
-                            <span class="pattern-group-icon"></span>
-                            Advanced Detection
-                        </div>
+                        <div class="pattern-group-title"><span class="pattern-group-icon"></span>Advanced Detection</div>
                         <div class="pattern-items">
                             <span class="pattern-tag">High Entropy Strings</span>
                             <span class="pattern-tag">Generic API Keys</span>
@@ -627,53 +327,49 @@ const github_token = 'ghp_16C7e42F292c6912E7710c838347Ae178B4a';"></textarea>
         </div>
 
         <div class="offline-usage">
-            <h3>📥 Use Offline (Zero Network Access)</h3>
-            <p style="color: var(--color-text-secondary); margin-bottom: 16px;">
-                This tool runs <strong>completely in your browser</strong> with no server communication. You can download and use it offline:
-            </p>
-            <ol style="color: var(--color-text-secondary); margin-left: 20px; line-height: 1.8;">
-                <li>Right-click this page and select "Save As" or use Ctrl+S</li>
-                <li>Save as <code style="background: var(--color-bg-tertiary); padding: 2px 6px; border-radius: 3px;">secret-scanner.html</code></li>
-                <li>Open the saved file in any browser - works completely offline</li>
-                <li>Your code never touches a server, database, or network</li>
+            <h3>📥 Use Offline</h3>
+            <p style="color: var(--text-2); margin-bottom: 16px;">Runs <strong>completely in your browser</strong> with zero server communication. Download and use offline:</p>
+            <ol style="color: var(--text-2); margin-left: 20px; line-height: 1.8;">
+                <li>Right-click and "Save As" or Ctrl+S</li>
+                <li>Save as <code style="background: var(--bg-3); padding: 2px 6px; border-radius: 3px;">secret-scanner.html</code></li>
+                <li>Open in any browser - works completely offline</li>
+                <li>Your code never touches a server or network</li>
             </ol>
-            <div style="margin-top: 16px; padding: 16px; background: var(--color-bg-tertiary); border-radius: 8px; border-left: 4px solid var(--color-accent);">
-                <p style="color: var(--color-text-primary); font-weight: 600; margin-bottom: 8px;">🔐 Privacy Guarantee</p>
-                <p style="color: var(--color-text-secondary); font-size: 14px;">
-                    No analytics, no tracking, no telemetry, no external requests. Open the browser dev console and watch the Network tab - you'll see zero outbound requests during scanning.
-                </p>
+            <div style="margin-top: 16px; padding: 16px; background: var(--bg-3); border-radius: 8px; border-left: 4px solid var(--accent);">
+                <p style="color: var(--text-1); font-weight: 600; margin-bottom: 8px;">🔐 Privacy Guarantee</p>
+                <p style="color: var(--text-2); font-size: 14px;">No analytics, tracking, or telemetry. Open dev console Network tab - zero outbound requests during scanning.</p>
             </div>
         </div>
 
         <div class="quickstart">
-            <h3>🚀 QuickStart Guide</h3>
+            <h3>🚀 QuickStart</h3>
             <div class="quickstart-steps">
                 <div class="step">
                     <div class="step-number">1</div>
                     <div class="step-content">
                         <h4>Paste Your Code</h4>
-                        <p>Copy any source code, config files, or environment files into the text area above.</p>
+                        <p>Copy source code, config files, or environment files into the text area.</p>
                     </div>
                 </div>
                 <div class="step">
                     <div class="step-number">2</div>
                     <div class="step-content">
-                        <h4>Run the Scanner</h4>
-                        <p>Click "Scan for Secrets" (or press Ctrl+Enter) to analyze your code for hardcoded credentials and API keys.</p>
+                        <h4>Run Scanner</h4>
+                        <p>Click "Scan for Secrets" or press Ctrl+Enter.</p>
                     </div>
                 </div>
                 <div class="step">
                     <div class="step-number">3</div>
                     <div class="step-content">
                         <h4>Review Findings</h4>
-                        <p>Each detected secret shows the type, location (line number), and the exact match. Use "Copy Results" to share with your team.</p>
+                        <p>Each secret shows type, location, and exact match. Use "Copy Results" to share.</p>
                     </div>
                 </div>
                 <div class="step">
                     <div class="step-number">4</div>
                     <div class="step-content">
-                        <h4>Fix Security Issues</h4>
-                        <p>Remove hardcoded secrets and use environment variables or secret management tools instead.</p>
+                        <h4>Fix Issues</h4>
+                        <p>Remove hardcoded secrets and use environment variables.</p>
                         <div class="code-block">// ❌ Bad - Hardcoded secret
 const API_KEY = 'sk_live_abc123xyz789';
 
@@ -685,8 +381,8 @@ const API_KEY = process.env.STRIPE_API_KEY;</div>
         </div>
 
         <div class="footer">
-            <p>Open source project • <a href="https://github.com/Aren-Garro/shiny-secrets" target="_blank">GitHub Repository</a></p>
-            <p style="margin-top: 8px;">Built with ❤️ for developer security • 100% free, no tracking, client-side only</p>
+            <p>Open source • <a href="https://github.com/Aren-Garro/shiny-secrets" target="_blank">GitHub</a></p>
+            <p style="margin-top: 8px;">Built with ❤️ for developer security • 100% free, no tracking</p>
         </div>
     </div>
 
@@ -695,23 +391,19 @@ const API_KEY = process.env.STRIPE_API_KEY;</div>
     <script>
         function scanCode() {
             const input = document.getElementById('codeInput').value;
-            if (!input.trim()) {
-                alert('Please paste some code to scan!');
-                return;
-            }
+            if (!input.trim()) return alert('Please paste some code to scan!');
 
             const loading = document.getElementById('loading');
-            const resultsSection = document.getElementById('resultsSection');
+            const results = document.getElementById('resultsSection');
             loading.classList.add('active');
-            resultsSection.style.display = 'none';
+            results.style.display = 'none';
 
             setTimeout(() => {
                 try {
-                    const findings = window.ShinySecretsBrowserScanner.scanInput(input);
-                    displayResults(findings);
+                    displayResults(window.ShinySecretsBrowserScanner.scanInput(input));
                 } catch (error) {
                     console.error('Scan error:', error);
-                    alert('An error occurred during scanning. Please try again.');
+                    alert('Scan error occurred.');
                 } finally {
                     loading.classList.remove('active');
                 }
@@ -720,34 +412,13 @@ const API_KEY = process.env.STRIPE_API_KEY;</div>
 
         function copyResults() {
             const findings = window.lastFindings || [];
-            if (findings.length === 0) {
-                alert('No results to copy!');
-                return;
-            }
+            if (!findings.length) return alert('No results to copy!');
 
-            let text = `Secret Scanner Results
-`;
-            text += `======================
-
-`;
-            text += `Total secrets found: ${findings.length}
-
-`;
-
-            findings.forEach((finding, index) => {
-                text += `${index + 1}. ${finding.type}
-`;
-                text += `   Line: ${finding.line}
-`;
-                text += `   Match: ${finding.match}
-`;
-                if (finding.entropy) {
-                    text += `   Entropy: ${finding.entropy} bits
-`;
-                }
-                text += `   Code: ${finding.content}
-
-`;
+            let text = `Secret Scanner Results\n======================\n\nTotal: ${findings.length}\n\n`;
+            findings.forEach((f, i) => {
+                text += `${i + 1}. ${f.type}\n   Line: ${f.line}\n   Match: ${f.match}\n`;
+                if (f.entropy) text += `   Entropy: ${f.entropy} bits\n`;
+                text += `   Code: ${f.content}\n\n`;
             });
 
             navigator.clipboard.writeText(text).then(() => {
@@ -758,84 +429,57 @@ const API_KEY = process.env.STRIPE_API_KEY;</div>
                     btn.textContent = '📋 Copy Results';
                     btn.classList.remove('copied');
                 }, 2000);
-            }).catch(() => {
-                alert('Failed to copy to clipboard. Please try again.');
-            });
+            }).catch(() => alert('Copy failed.'));
         }
 
         function displayResults(findings) {
             window.lastFindings = findings;
+            const results = document.getElementById('resultsSection');
+            const stats = document.getElementById('resultStats');
+            const container = document.getElementById('findingsContainer');
+            const actions = document.getElementById('resultActions');
 
-            const resultsSection = document.getElementById('resultsSection');
-            const statsContainer = document.getElementById('resultStats');
-            const findingsContainer = document.getElementById('findingsContainer');
-            const resultActions = document.getElementById('resultActions');
+            results.style.display = 'block';
 
-            resultsSection.style.display = 'block';
-
-            if (findings.length === 0) {
-                statsContainer.innerHTML = '<span class="stat-badge stat-success">✓ No secrets detected</span>';
-                resultActions.style.display = 'none';
-                findingsContainer.innerHTML = `
-                    <div class="no-results">
-                        <svg fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                        </svg>
-                        <h3>All Clear!</h3>
-                        <p>No hardcoded secrets detected in your code.</p>
-                    </div>
-                `;
+            if (!findings.length) {
+                stats.innerHTML = '<span class="stat-badge stat-success">✓ No secrets detected</span>';
+                actions.style.display = 'none';
+                container.innerHTML = `<div class="no-results"><svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg><h3>All Clear!</h3><p>No hardcoded secrets detected.</p></div>`;
                 return;
             }
 
-            resultActions.style.display = 'flex';
+            actions.style.display = 'flex';
+            const counts = {
+                critical: findings.filter(f => f.severity === 'CRITICAL').length,
+                high: findings.filter(f => f.severity === 'HIGH').length,
+                medium: findings.filter(f => f.severity === 'MEDIUM').length
+            };
 
-            const criticalCount = findings.filter(f =>
-                f.type.includes('Live') || f.type.includes('Private') || f.type.includes('AWS Secret')
-            ).length;
-
-            statsContainer.innerHTML = `
+            stats.innerHTML = `
                 <span class="stat-badge stat-danger">⚠️ ${findings.length} secret${findings.length > 1 ? 's' : ''} found</span>
-                ${criticalCount > 0 ? `<span class="stat-badge stat-warning">🔥 ${criticalCount} critical</span>` : ''}
-                ${highCount > 0 ? `<span class="stat-badge stat-warning">⚡ ${highCount} high</span>` : ''}
-                ${mediumCount > 0 ? `<span class="stat-badge" style="background: rgba(56, 189, 248, 0.2); color: var(--color-accent); border: 1px solid var(--color-accent);">ℹ️ ${mediumCount} medium</span>` : ''}
+                ${counts.critical ? `<span class="stat-badge stat-warning">🔥 ${counts.critical} critical</span>` : ''}
+                ${counts.high ? `<span class="stat-badge stat-warning">⚡ ${counts.high} high</span>` : ''}
+                ${counts.medium ? `<span class="stat-badge" style="background: rgba(56, 189, 248, 0.2); color: var(--accent); border: 1px solid var(--accent);">ℹ️ ${counts.medium} medium</span>` : ''}
             `;
 
-            findingsContainer.innerHTML = findings.map(finding => {
-                const escapedMatch = escapeHtml(finding.match);
-                const escapedContent = escapeHtml(finding.content);
-                const highlightedContent = escapedContent.replace(
-                    new RegExp(escapedMatch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'),
-                    `<span class="secret-highlight">${escapedMatch}</span>`
+            container.innerHTML = findings.map(f => {
+                const esc = text => {
+                    const div = document.createElement('div');
+                    div.textContent = text;
+                    return div.innerHTML;
+                };
+                const match = esc(f.match);
+                const content = esc(f.content);
+                const highlighted = content.replace(
+                    new RegExp(match.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'),
+                    `<span class="secret-highlight">${match}</span>`
                 );
+                const severityClass = `severity-${f.severity.toLowerCase()}`;
 
-                return `
-                    <div class="finding">
-                        <div class="finding-header">
-                            <span class="finding-type">🔴 ${escapeHtml(finding.type)}</span>
-                            <span style="display: flex; align-items: center; gap: 10px;">
-                                <span class="severity-badge ${severityClass}">${escapeHtml(severity)}</span>
-                                <span class="finding-line">Line ${finding.line}</span>
-                            </span>
-                        </div>
-                        <p style="color: var(--color-text-secondary); font-size: 13px; margin-bottom: 4px;">
-                            ${escapeHtml(finding.description)}
-                        </p>
-                        ${finding.entropy ? `<p class="entropy-info">Entropy: ${finding.entropy} bits</p>` : ''}
-                        <div class="finding-content">${highlightedContent}</div>
-                    </div>
-                `;
+                return `<div class="finding"><div class="finding-header"><span class="finding-type">🔴 ${esc(f.type)}</span><span style="display: flex; align-items: center; gap: 10px;"><span class="severity-badge ${severityClass}">${esc(f.severity)}</span><span class="finding-line">Line ${f.line}</span></span></div><p style="color: var(--text-2); font-size: 13px; margin-bottom: 4px;">${esc(f.description)}</p>${f.entropy ? `<p class="entropy-info">Entropy: ${f.entropy} bits</p>` : ''}<div class="finding-content">${highlighted}</div></div>`;
             }).join('');
 
-            setTimeout(() => {
-                resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 100);
-        }
-
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
+            setTimeout(() => results.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
         }
 
         function clearAll() {
@@ -845,72 +489,22 @@ const API_KEY = process.env.STRIPE_API_KEY;</div>
 
         function loadSample(type) {
             const samples = {
-                aws: `# AWS Configuration
-aws_access_key_id = AKIAIOSFODNN7EXAMPLE
-aws_secret_access_key = wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
-
-# Instance metadata
-region = us-east-1
-output = json`,
-                stripe: `// Payment processing
-const stripe = require('stripe');
-const stripeClient = stripe('sk_live_4eC39HqLyjWDarjtT1zdp7dc');
-
-// Webhook secret
-const webhookSecret = 'whsec_test_secret_7Ss8TEwmkHApy5OhZ4x7dEp9';
-
-async function processPayment() {
-    const charge = await stripeClient.charges.create({
-        amount: 2000,
-        currency: 'usd'
-    });
-}`,
-                github: `# GitHub Actions Configuration
-name: Deploy
-env:
-  GITHUB_TOKEN: ghp_16C7e42F292c6912E7710c838347Ae178B4a
-  GITHUB_OAUTH: gho_qJaIv5WLZxUfIvvxqJYLKh4t09o2U3A0Test
-
-- name: Checkout
-  uses: actions/checkout@v2
-  with:
-    token: ghp_16C7e42F292c6912E7710c838347Ae178B4a`,
-                mixed: `// Application configuration
-export const config = {
-    // Google API
-    googleApiKey: 'AIzaSyDaGmWKa4JsXZ-HjGw7ISLn_3namBGewQe',
-
-    // Slack integration
-    slackToken: 'xoxb-123456789012-1234567890123-4ut0m4t10nt35tt0k3n',
-    slackWebhook: 'https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX',
-
-    // Database
-    dbUrl: 'postgresql://admin:SuperSecret123@db.example.com:5432/mydb',
-
-    // SendGrid
-    sendgridKey: 'SG.ngeVfQFYQlKU0ufo8x5d1A.TwL2iGABf9DHoTf-09kqeF8tHH' + 'K1e4gc3VYaVfExyzW',
-
-    // JWT secret
-    jwtSecret: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
-
-    // Admin credentials
-    adminPassword: 'Ch4ng3M3N0w!2024'
-};`
+                aws: `# AWS Config\naws_access_key_id = AKIAIOSFODNN7EXAMPLE\naws_secret_access_key = wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY\n\nregion = us-east-1`,
+                stripe: `// Payment\nconst stripe = require('stripe');\nconst client = stripe('sk_live_4eC39HqLyjWDarjtT1zdp7dc');\n\nconst webhook = 'whsec_test_7Ss8TEwmkHApy5OhZ4x7dEp9';`,
+                github: `# GitHub Actions\nenv:\n  TOKEN: ghp_16C7e42F292c6912E7710c838347Ae178B4a\n  OAUTH: gho_qJaIv5WLZxUfIvvxqJYLKh4t09o2U3A0Test`,
+                mixed: `const config = {\n  google: 'AIzaSyDaGmWKa4JsXZ-HjGw7ISLn_3namBGewQe',\n  slack: 'xoxb-123456789012-1234567890123-4ut0m4t10nt35tt0k3n',\n  db: 'postgresql://admin:SuperSecret123@db.example.com:5432/mydb',\n  jwt: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c'\n};`
             };
-
             document.getElementById('codeInput').value = samples[type] || '';
         }
 
         document.addEventListener('DOMContentLoaded', () => {
             const textarea = document.getElementById('codeInput');
-
             textarea.addEventListener('keydown', (e) => {
                 if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
                     e.preventDefault();
                     scanCode();
                 }
             });
-
             textarea.focus();
         });
     </script>
