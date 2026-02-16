@@ -24,13 +24,26 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
-        run: npm ci --ignore-scripts
-        if: hashFiles('package-lock.json') != ''
+        run: npm ci --ignore-scripts --production=false
 
       - name: Run tests
         run: npm test
 
+      - name: Check npm token availability
+        id: npm_auth
+        run: |
+          if [ -n "${{ secrets.NPM_TOKEN }}" ]; then
+            echo "has_token=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_token=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Publish package
+        if: steps.npm_auth.outputs.has_token == 'true'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --provenance --access public
+
+      - name: Skip publish (missing NPM_TOKEN)
+        if: steps.npm_auth.outputs.has_token != 'true'
+        run: echo "NPM_TOKEN is not set; skipping npm publish."

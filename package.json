@@ -5,8 +5,8 @@
   "main": "scanner.js",
   "types": "types/index.d.ts",
   "bin": {
-    "shiny-secrets": "./scanner.js",
-    "shiny-secrets-v2": "./scanner-v2.js"
+    "shiny-secrets": "scanner.js",
+    "shiny-secrets-v2": "scanner-v2.js"
   },
   "scripts": {
     "test": "jest",
@@ -50,7 +50,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Aren-Garro/shiny-secrets.git"
+    "url": "git+https://github.com/Aren-Garro/shiny-secrets.git"
   },
   "bugs": {
     "url": "https://github.com/Aren-Garro/shiny-secrets/issues"
@@ -96,7 +96,12 @@
     },
     "rules": {
       "no-console": "off",
-      "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }]
+      "no-unused-vars": [
+        "warn",
+        {
+          "argsIgnorePattern": "^_"
+        }
+      ]
     }
   }
 }
