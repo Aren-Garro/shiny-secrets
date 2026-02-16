@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Shiny Secrets v2.0 - Enhanced CLI Secret Scanner
+ * Shiny Secrets v2.1 - Enhanced CLI Secret Scanner
  * 
  * New features:
  * - Configuration file support (.shinysecretsrc)
@@ -18,7 +18,7 @@ const path = require('path');
 const { execSync } = require('child_process');
 
 // Version
-const VERSION = '2.0.0';
+const VERSION = '2.1.0';
 
 // ANSI colors
 const colors = {
