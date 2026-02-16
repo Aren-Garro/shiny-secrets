@@ -4,11 +4,16 @@
 
 Detect hardcoded API keys, tokens, and credentials in your codebase before they reach production. Perfect for git hooks, CI/CD pipelines, and developer workflows.
 
-[![npm version](https://img.shields.io/npm/v/shiny-secrets.svg)](https://www.npmjs.com/package/shiny-secrets)
+[![GitHub release](https://img.shields.io/github/v/release/Aren-Garro/shiny-secrets?label=release)](https://github.com/Aren-Garro/shiny-secrets/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node.js CI](https://github.com/Aren-Garro/shiny-secrets/workflows/Node.js%20CI/badge.svg)](https://github.com/Aren-Garro/shiny-secrets/actions)
 
 ---
+
+
+> ℹ️ **NPM status:** The `shiny-secrets` package is not currently published on npm, so `npm view shiny-secrets version` returns 404.
+>
+> Use the GitHub install command below until npm publishing is enabled.
 
 ## ✨ Features
 
@@ -35,7 +40,7 @@ Detect hardcoded API keys, tokens, and credentials in your codebase before they 
 ### Installation
 
 ```bash
-npm install -g shiny-secrets
+npm install -g github:Aren-Garro/shiny-secrets
 ```
 
 ### Basic Usage
@@ -64,7 +69,7 @@ shiny-secrets-v2 . --sarif > results.sarif
 ### Global CLI Installation
 
 ```bash
-npm install -g shiny-secrets
+npm install -g github:Aren-Garro/shiny-secrets
 shiny-secrets --help
 shiny-secrets-v2 --help
 ```
@@ -72,7 +77,7 @@ shiny-secrets-v2 --help
 ### Project Dependency
 
 ```bash
-npm install --save-dev shiny-secrets
+npm install --save-dev github:Aren-Garro/shiny-secrets
 ```
 
 Add to `package.json`:
@@ -336,7 +341,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '18'
-      - run: npm install -g shiny-secrets
+      - run: npm install -g github:Aren-Garro/shiny-secrets
       - run: shiny-secrets-v2 . --fail-on=critical
 ```
 
@@ -355,7 +360,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
-      - run: npm install -g shiny-secrets
+      - run: npm install -g github:Aren-Garro/shiny-secrets
       - run: shiny-secrets-v2 . --sarif > results.sarif
       - uses: github/codeql-action/upload-sarif@v2
         with:
@@ -368,7 +373,7 @@ jobs:
 scan-secrets:
   stage: test
   script:
-    - npm install -g shiny-secrets
+    - npm install -g github:Aren-Garro/shiny-secrets
     - shiny-secrets-v2 . --fail-on=critical --json > secrets.json
   artifacts:
     paths:
