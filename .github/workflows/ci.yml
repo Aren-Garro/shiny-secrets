@@ -26,7 +26,15 @@ jobs:
         cache: 'npm'  # Cache npm dependencies
     
     - name: Install dependencies
-      run: npm ci --ignore-scripts --production=false
+      run: |
+        if [ -f package-lock.json ]; then
+          npm ci --ignore-scripts --production=false
+        else
+          npm install --ignore-scripts --production=false
+          npm ci --ignore-scripts --include=dev
+        else
+          npm install --ignore-scripts --include=dev
+        fi
     
     - name: Run test suite
       run: npm test
@@ -61,7 +69,15 @@ jobs:
         cache: 'npm'
     
     - name: Install dependencies
-      run: npm ci --ignore-scripts --production=false
+      run: |
+        if [ -f package-lock.json ]; then
+          npm ci --ignore-scripts --production=false
+        else
+          npm install --ignore-scripts --production=false
+          npm ci --ignore-scripts --include=dev
+        else
+          npm install --ignore-scripts --include=dev
+        fi
     
     - name: Run ESLint
       run: npm run lint
@@ -85,7 +101,15 @@ jobs:
         cache: 'npm'
     
     - name: Install dependencies
-      run: npm ci --ignore-scripts --production=false
+      run: |
+        if [ -f package-lock.json ]; then
+          npm ci --ignore-scripts --production=false
+        else
+          npm install --ignore-scripts --production=false
+          npm ci --ignore-scripts --include=dev
+        else
+          npm install --ignore-scripts --include=dev
+        fi
     
     - name: Test npm pack
       run: |
