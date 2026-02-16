@@ -767,7 +767,7 @@ const API_KEY = process.env.STRIPE_API_KEY;</div>
             }
         };
 
-        // Shannon entropy calculation (optimized)
+        // Shannon entropy calculation
         function calculateEntropy(str) {
             if (!str || str.length < 8) return 0;
             const len = str.length;
@@ -783,7 +783,7 @@ const API_KEY = process.env.STRIPE_API_KEY;</div>
             return entropy;
         }
 
-        // High entropy string detection (improved accuracy)
+        // High entropy string detection
         function detectHighEntropy(line, lineNumber) {
             const findings = [];
             // Avoid common false positives
@@ -818,7 +818,7 @@ const API_KEY = process.env.STRIPE_API_KEY;</div>
             return findings;
         }
 
-        // Main scanning function (optimized and bug-fixed)
+        // Main scanning function
         function scanCode() {
             const input = document.getElementById('codeInput').value;
             if (!input.trim()) {
@@ -838,7 +838,7 @@ const API_KEY = process.env.STRIPE_API_KEY;</div>
                     const findings = [];
                     const lines = input.split('\n');
 
-                    // Apply regex patterns (optimized)
+                    // Apply regex patterns
                     for (let [key, pattern] of Object.entries(patterns)) {
                         lines.forEach((line, index) => {
                             const localRegex = new RegExp(pattern.regex.source, pattern.regex.flags);
@@ -861,13 +861,13 @@ const API_KEY = process.env.STRIPE_API_KEY;</div>
                         });
                     }
 
-                    // Apply entropy detection (with improved filtering)
+                    // Apply entropy detection
                     lines.forEach((line, index) => {
                         const entropyFindings = detectHighEntropy(line, index + 1);
                         findings.push(...entropyFindings);
                     });
 
-                    // Remove duplicates (optimized)
+                    // Remove duplicates
                     const uniqueFindings = [];
                     const seen = new Set();
                     for (let finding of findings) {
@@ -928,7 +928,7 @@ const API_KEY = process.env.STRIPE_API_KEY;</div>
             });
         }
 
-        // Display results (bug-fixed and optimized)
+        // Display results
         function displayResults(findings) {
             // Store findings for copy function
             window.lastFindings = findings;
@@ -1012,7 +1012,7 @@ const API_KEY = process.env.STRIPE_API_KEY;</div>
             document.getElementById('resultsSection').style.display = 'none';
         }
 
-        // Load sample data (WITHOUT auto-scan for better UX)
+        // Load sample data
         function loadSample(type) {
             const samples = {
                 aws: `# AWS Configuration
@@ -1069,7 +1069,6 @@ export const config = {
             };
 
             document.getElementById('codeInput').value = samples[type] || '';
-            // Removed auto-scan - let users read the sample first
         }
 
         // Keyboard shortcuts and initialization

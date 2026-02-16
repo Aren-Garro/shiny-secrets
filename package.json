@@ -1,7 +1,7 @@
 {
   "name": "shiny-secrets",
   "version": "2.0.0",
-  "description": "Fast, lightweight secret scanner with 21+ detection patterns, entropy analysis, and zero dependencies. Detect hardcoded API keys, tokens, and credentials before they reach production.",
+  "description": "Lightweight secret scanner with 21 detection patterns, entropy analysis, and zero dependencies.",
   "main": "scanner.js",
   "bin": {
     "shiny-secrets": "./scanner.js",
@@ -16,26 +16,11 @@
   "keywords": [
     "security",
     "secrets",
-    "scanning",
-    "credentials",
-    "api-keys",
-    "tokens",
-    "static-analysis",
-    "code-security",
     "secret-detection",
-    "aws",
-    "github",
-    "stripe",
-    "google",
-    "slack",
-    "sendgrid",
-    "cli",
-    "git-hooks",
+    "static-analysis",
     "pre-commit",
-    "ci-cd",
     "sarif",
-    "entropy",
-    "devsecops"
+    "cli"
   ],
   "author": "Aren Garro LLC <contact@arengarro.com>",
   "license": "MIT",
@@ -46,9 +31,9 @@
   "bugs": {
     "url": "https://github.com/Aren-Garro/shiny-secrets/issues"
   },
-  "homepage": "https://aren-garro.github.io/shiny-secrets/",
+  "homepage": "https://github.com/Aren-Garro/shiny-secrets",
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=18.0.0"
   },
   "files": [
     "scanner.js",
@@ -57,14 +42,5 @@
     ".shinysecretsrc.example",
     "README.md",
     "LICENSE"
-  ],
-  "os": [
-    "darwin",
-    "linux",
-    "win32"
-  ],
-  "funding": {
-    "type": "github",
-    "url": "https://github.com/sponsors/Aren-Garro"
-  }
+  ]
 }

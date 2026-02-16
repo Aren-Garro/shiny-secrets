@@ -23,7 +23,7 @@ const colors = {
     bold: '\x1b[1m'
 };
 
-// Secret detection patterns (same as web version)
+// Secret detection patterns
 const patterns = {
     aws_access_key: {
         name: 'AWS Access Key',

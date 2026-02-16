@@ -2,69 +2,67 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   test:
-    name: Test Suite
+    name: Test (Node ${{ matrix.node-version }}, ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        node-version: [14.x, 16.x, 18.x, 20.x]
-    
+        node-version: [18.x, 20.x, 22.x]
+
     steps:
-    - uses: actions/checkout@v3
-    
+    - uses: actions/checkout@v4
+
     - name: Setup Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-    
-    - name: Run test suite
+
+    - name: Run tests
       run: npm test
-    
-    - name: Test CLI v1
+
+    - name: Test CLI scan
       run: |
         echo 'const key = "AKIAIOSFODNN7EXAMPLE";' > test-file.js
-        node scanner.js test-file.js || echo "Expected failure - secret detected"
-    
-    - name: Test CLI v2 with SARIF output
+        node scanner.js test-file.js || echo "Secret detected (expected)"
+
+    - name: Test SARIF output
       run: |
         echo 'const key = "AKIAIOSFODNN7EXAMPLE";' > test-file.js
         node scanner-v2.js test-file.js --sarif > sarif-output.json || true
-        cat sarif-output.json
 
-  lint:
-    name: Scan Self
+  self-scan:
+    name: Self-scan
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18.x'
-    
-    - name: Scan repository for secrets
-      run: |
-        node scanner-v2.js . --fail-on=critical --exclude "test.js" --exclude "test-file.js"
+    - uses: actions/checkout@v4
 
-  npm-dry-run:
-    name: NPM Publish Dry Run
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22.x
+
+    - name: Scan repository
+      run: node scanner-v2.js . --fail-on=critical --exclude "test.js" --exclude "test-v2.js" --exclude "test-file.js"
+
+  package:
+    name: Package check
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    
+    - uses: actions/checkout@v4
+
     - name: Setup Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
-        node-version: '18.x'
-        registry-url: 'https://registry.npmjs.org'
-    
-    - name: Test npm pack
+        node-version: 22.x
+        registry-url: https://registry.npmjs.org
+
+    - name: Verify package
       run: |
         npm pack --dry-run
         npm pack
