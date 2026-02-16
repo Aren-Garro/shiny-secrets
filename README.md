@@ -600,7 +600,7 @@ Contributions are welcome! Please:
 
 ## 🔒 Security
 
-If you discover a security vulnerability, please email [contact@arengarro.com](mailto:contact@arengarro.com) instead of using the issue tracker.
+If you discover a security vulnerability, please email [inbox@arengarro.com](mailto:inbox@arengarro.com) instead of using the issue tracker.
 
 ---
 
