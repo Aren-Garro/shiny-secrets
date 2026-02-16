@@ -71,6 +71,36 @@ const defaultConfig = {
     disabledPatterns: []
 };
 
+const MERGE_ARRAY_KEYS = new Set([
+    'exclude',
+    'include',
+    'allowlist',
+    'allowPatterns',
+    'disabledPatterns'
+]);
+
+function mergeConfig(config = {}) {
+    const merged = {
+        ...defaultConfig,
+        ...config,
+        entropy: {
+            ...defaultConfig.entropy,
+            ...(config.entropy || {})
+        }
+    };
+
+    for (const key of MERGE_ARRAY_KEYS) {
+        if (!Array.isArray(config[key])) {
+            merged[key] = [...defaultConfig[key]];
+            continue;
+        }
+
+        merged[key] = [...defaultConfig[key], ...config[key]];
+    }
+
+    return merged;
+}
+
 // Load configuration
 function loadConfig(configPath = null) {
     const searchPaths = [
@@ -87,13 +117,13 @@ function loadConfig(configPath = null) {
                 const content = fs.readFileSync(p, 'utf8');
                 // Simple YAML/JSON parser
                 const config = parseConfig(content);
-                return { ...defaultConfig, ...config };
+                return mergeConfig(config);
             } catch (error) {
                 console.error(`${colors.yellow}Warning: Failed to parse config ${p}: ${error.message}${colors.reset}`);
             }
         }
     }
-    return defaultConfig;
+    return mergeConfig();
 }
 
 // Simple config parser (YAML-like)
@@ -137,6 +167,76 @@ function parseConfig(content) {
         }
     }
     return config;
+}
+
+// Check if path matches glob pattern
+function matchesGlob(filePath, pattern) {
+    const normalizedPath = filePath.replace(/\\/g, '/');
+    const normalizedPattern = pattern.replace(/\\/g, '/');
+
+    const pathParts = normalizedPath.split('/');
+    const patternParts = normalizedPattern.split('/');
+    const memo = new Map();
+
+    const matchesSegment = (segment, candidate) => {
+        const escapedSegment = segment.replace(/([.+^${}()|[\]\\])/g, '\\$1');
+        const segmentRegex = '^' + escapedSegment.replace(/\*/g, '.*').replace(/\?/g, '.') + '$';
+        return new RegExp(segmentRegex).test(candidate);
+    };
+
+    const matches = (patternIndex, pathIndex) => {
+        const key = `${patternIndex}:${pathIndex}`;
+        if (memo.has(key)) return memo.get(key);
+
+        if (patternIndex === patternParts.length) {
+            return pathIndex === pathParts.length;
+        }
+
+        const part = patternParts[patternIndex];
+        let result = false;
+
+        if (part === '**') {
+            if (patternIndex === patternParts.length - 1) {
+                result = true;
+            } else {
+                for (let i = pathIndex; i <= pathParts.length; i++) {
+                    if (matches(patternIndex + 1, i)) {
+                        result = true;
+                        break;
+                    }
+                }
+            }
+        } else if (pathIndex < pathParts.length && matchesSegment(part, pathParts[pathIndex])) {
+            result = matches(patternIndex + 1, pathIndex + 1);
+        }
+
+        memo.set(key, result);
+        return result;
+    };
+
+    return matches(0, 0);
+}
+
+// Check if file should be scanned
+function shouldScanFile(filePath, config) {
+    const relativePath = path.relative(process.cwd(), filePath);
+    
+    // Check excludes
+    for (const pattern of config.exclude) {
+        if (matchesGlob(relativePath, pattern)) return false;
+    }
+    
+    // Check includes
+    const ext = path.extname(filePath);
+    for (const pattern of config.include) {
+        if (pattern.startsWith('*.')) {
+            if (ext === pattern.slice(1)) return true;
+        } else if (matchesGlob(relativePath, pattern)) {
+            return true;
+        }
+    }
+    
+    return false;
 }
 
 // Recursively scan directory
