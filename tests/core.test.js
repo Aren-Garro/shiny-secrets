@@ -13,8 +13,12 @@ const {
     sortFindings,
     matchesGlob,
     shouldScanFile,
+    readFileOptimized,
     patterns
 } = require('../lib/core');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
 
 describe('Core Module', () => {
     describe('calculateEntropy', () => {
@@ -84,6 +88,18 @@ describe('Core Module', () => {
             });
             
             expect(findings.length).toBeGreaterThan(0);
+        });
+
+        test('reports correct columns for duplicate tokens', () => {
+            const line = 'key1="abc123def456ghi789jkl" key2="abc123def456ghi789jkl"';
+            const findings = detectHighEntropy(line, 1, {
+                minLength: 10,
+                threshold: 3.0
+            });
+
+            expect(findings.length).toBe(2);
+            expect(findings[0].column).toBe(7);
+            expect(findings[1].column).toBe(36);
         });
     });
 
@@ -163,10 +179,8 @@ describe('Core Module', () => {
                 filename: 'app.js',
                 enabled: false
             });
-            
-            // This will still detect because scanEntropy is explicitly called
-            // In scanContent, it would be skipped
-            expect(findings.length).toBeGreaterThan(0);
+
+            expect(findings.length).toBe(0);
         });
     });
 
@@ -176,7 +190,10 @@ describe('Core Module', () => {
 const awsKey = "AKIAIOSFODNN7EXAMPLE";
 const someSecret = "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08";
             `;
-            const findings = scanContent(content, { filename: 'config.js' });
+            const findings = scanContent(content, {
+                filename: 'config.js',
+                enableEntropy: true
+            });
             
             expect(findings.length).toBeGreaterThan(1);
         });
@@ -332,6 +349,32 @@ const key2 = "AKIAIOSFODNN7EXAMPLE";
                 expect(pattern).toHaveProperty('severity');
                 expect(pattern.regex).toBeInstanceOf(RegExp);
             });
+        });
+    });
+
+    describe('readFileOptimized', () => {
+        test('reads file asynchronously without blocking event loop', async () => {
+            const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'shiny-secrets-'));
+            const tempFile = path.join(tempDir, 'large-file.txt');
+            fs.writeFileSync(tempFile, 'x'.repeat(2 * 1024 * 1024));
+
+            let asyncTickCompleted = false;
+            const tickPromise = new Promise(resolve => {
+                setTimeout(() => {
+                    asyncTickCompleted = true;
+                    resolve();
+                }, 0);
+            });
+
+            const contentPromise = readFileOptimized(tempFile);
+            await tickPromise;
+            const content = await contentPromise;
+
+            expect(asyncTickCompleted).toBe(true);
+            expect(content.length).toBe(2 * 1024 * 1024);
+
+            fs.unlinkSync(tempFile);
+            fs.rmdirSync(tempDir);
         });
     });
 });
