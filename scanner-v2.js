@@ -159,12 +159,14 @@ function parseConfig(content) {
 
 // Check if path matches glob pattern
 function matchesGlob(filePath, pattern) {
+    // Normalize path separators to forward slashes
+    filePath = filePath.replace(/\\/g, '/');
     const regex = pattern
+        .replace(/\./g, '\\.')        // Escape dots FIRST (before wildcards create '.*')
         .replace(/\*\*/g, '§§')
         .replace(/\*/g, '[^/]*')
         .replace(/§§/g, '.*')
-        .replace(/\?/g, '.')
-        .replace(/\./g, '\\.');
+        .replace(/\?/g, '.');
     return new RegExp('^' + regex + '$').test(filePath);
 }
 
@@ -286,7 +288,7 @@ function scanContent(content, filename = 'input', config = defaultConfig) {
     // Apply entropy detection if enabled
     if (config.entropy.enabled) {
         lines.forEach((line, index) => {
-            if (/^[\s#\/\*]*(?:import|export|const|let|var|function|class|if|for|while)/.test(line)) {
+            if (/^[\s#\/\*]*(?:import|function|class|if|for|while)\b/.test(line)) {
                 return;
             }
             

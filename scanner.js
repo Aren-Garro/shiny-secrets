@@ -166,7 +166,7 @@ function calculateEntropy(str) {
 // High entropy detection
 function detectHighEntropy(line, lineNumber) {
     const findings = [];
-    if (/^[\s#\/\*]*(?:import|export|const|let|var|function|class|if|for|while)/.test(line)) {
+    if (/^[\s#\/\*]*(?:import|function|class|if|for|while)\b/.test(line)) {
         return findings;
     }
     
@@ -403,9 +403,9 @@ Examples:
 
     // Exit with appropriate code
     if (allFindings.length > 0) {
-        const hasCritical = allFindings.some(f => f.severity === 'CRITICAL');
-        if (options.failOnCritical && hasCritical) {
-            process.exit(1);
+        if (options.failOnCritical) {
+            const hasCritical = allFindings.some(f => f.severity === 'CRITICAL');
+            process.exit(hasCritical ? 1 : 0);
         }
         process.exit(1); // Exit with error if any secrets found
     }

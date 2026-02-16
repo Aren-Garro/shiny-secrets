@@ -36,14 +36,10 @@ elif [ -f "$REPO_ROOT/node_modules/.bin/shiny-secrets" ]; then
 elif command -v shiny-secrets &> /dev/null; then
     SCANNER_PATH="shiny-secrets"
 else
-    # Download scanner if not found
-    echo "📥 Scanner not found locally. Downloading..."
-    SCANNER_PATH="$REPO_ROOT/.git/hooks/scanner.js"
-    curl -s https://raw.githubusercontent.com/Aren-Garro/shiny-secrets/main/scanner.js -o "$SCANNER_PATH"
-    if [ $? -ne 0 ]; then
-        echo "⚠️  Warning: Could not download scanner. Skipping secret scan."
-        exit 0
-    fi
+    echo "⚠️  Warning: shiny-secrets scanner not found."
+    echo "   Install with: npm install --save-dev shiny-secrets"
+    echo "   Or place scanner.js in the repository root."
+    exit 0
 fi
 
 # Run scanner on staged files
