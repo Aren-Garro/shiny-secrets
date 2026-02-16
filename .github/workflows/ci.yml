@@ -28,9 +28,9 @@ jobs:
     - name: Install dependencies
       run: |
         if [ -f package-lock.json ]; then
-          npm ci --ignore-scripts --production=false
+          npm ci --ignore-scripts --include=dev
         else
-          npm install --ignore-scripts --production=false
+          npm install --ignore-scripts --include=dev
         fi
     
     - name: Run test suite
@@ -68,9 +68,9 @@ jobs:
     - name: Install dependencies
       run: |
         if [ -f package-lock.json ]; then
-          npm ci --ignore-scripts --production=false
+          npm ci --ignore-scripts --include=dev
         else
-          npm install --ignore-scripts --production=false
+          npm install --ignore-scripts --include=dev
         fi
     
     - name: Run ESLint
@@ -97,9 +97,9 @@ jobs:
     - name: Install dependencies
       run: |
         if [ -f package-lock.json ]; then
-          npm ci --ignore-scripts --production=false
+          npm ci --ignore-scripts --include=dev
         else
-          npm install --ignore-scripts --production=false
+          npm install --ignore-scripts --include=dev
         fi
     
     - name: Test npm pack
