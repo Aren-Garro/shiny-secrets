@@ -11,6 +11,7 @@ jobs:
     name: Test Suite
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false  # Don't cancel other jobs on first failure
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         node-version: [14.x, 16.x, 18.x, 20.x]
@@ -22,6 +23,11 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
+        cache: 'npm'  # Cache npm dependencies
+    
+    - name: Install dependencies
+      run: npm ci --ignore-scripts  # Faster, more reliable than npm install
+      if: hashFiles('package-lock.json') != ''
     
     - name: Run test suite
       run: npm test
@@ -36,9 +42,15 @@ jobs:
         echo 'const key = "AKIAIOSFODNN7EXAMPLE";' > test-file.js
         node scanner-v2.js test-file.js --sarif > sarif-output.json || true
         cat sarif-output.json
+    
+    - name: Cleanup test files
+      if: always()
+      run: |
+        rm -f test-file.js sarif-output.json
+      shell: bash
 
   lint:
-    name: Scan Self
+    name: Code Quality
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -47,10 +59,19 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: '18.x'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci --ignore-scripts
+      if: hashFiles('package-lock.json') != ''
+    
+    - name: Run ESLint
+      run: npm run lint
+      continue-on-error: true  # Don't fail build on lint warnings
     
     - name: Scan repository for secrets
       run: |
-        node scanner-v2.js . --fail-on=critical --exclude "test.js" --exclude "test-file.js"
+        node scanner-v2.js . --fail-on=critical --exclude "test.js" --exclude "test-v2.js" --exclude "test-file.js"
 
   npm-dry-run:
     name: NPM Publish Dry Run
@@ -63,9 +84,21 @@ jobs:
       with:
         node-version: '18.x'
         registry-url: 'https://registry.npmjs.org'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci --ignore-scripts
+      if: hashFiles('package-lock.json') != ''
     
     - name: Test npm pack
       run: |
         npm pack --dry-run
         npm pack
         tar -tzf shiny-secrets-*.tgz
+    
+    - name: Upload package artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: npm-package
+        path: shiny-secrets-*.tgz
+        retention-days: 7
