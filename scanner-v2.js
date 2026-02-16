@@ -159,15 +159,50 @@ function parseConfig(content) {
 
 // Check if path matches glob pattern
 function matchesGlob(filePath, pattern) {
-    // Normalize path separators to forward slashes
-    filePath = filePath.replace(/\\/g, '/');
-    const regex = pattern
-        .replace(/\./g, '\\.')        // Escape dots FIRST (before wildcards create '.*')
-        .replace(/\*\*/g, '§§')
-        .replace(/\*/g, '[^/]*')
-        .replace(/§§/g, '.*')
-        .replace(/\?/g, '.');
-    return new RegExp('^' + regex + '$').test(filePath);
+    const normalizedPath = filePath.replace(/\\/g, '/');
+    const normalizedPattern = pattern.replace(/\\/g, '/');
+
+    const pathParts = normalizedPath.split('/');
+    const patternParts = normalizedPattern.split('/');
+    const memo = new Map();
+
+    const matchesSegment = (segment, candidate) => {
+        const escapedSegment = segment.replace(/([.+^${}()|[\]\\])/g, '\\$1');
+        const segmentRegex = '^' + escapedSegment.replace(/\*/g, '.*').replace(/\?/g, '.') + '$';
+        return new RegExp(segmentRegex).test(candidate);
+    };
+
+    const matches = (patternIndex, pathIndex) => {
+        const key = `${patternIndex}:${pathIndex}`;
+        if (memo.has(key)) return memo.get(key);
+
+        if (patternIndex === patternParts.length) {
+            return pathIndex === pathParts.length;
+        }
+
+        const part = patternParts[patternIndex];
+        let result = false;
+
+        if (part === '**') {
+            if (patternIndex === patternParts.length - 1) {
+                result = true;
+            } else {
+                for (let i = pathIndex; i <= pathParts.length; i++) {
+                    if (matches(patternIndex + 1, i)) {
+                        result = true;
+                        break;
+                    }
+                }
+            }
+        } else if (pathIndex < pathParts.length && matchesSegment(part, pathParts[pathIndex])) {
+            result = matches(patternIndex + 1, pathIndex + 1);
+        }
+
+        memo.set(key, result);
+        return result;
+    };
+
+    return matches(0, 0);
 }
 
 // Check if file should be scanned
