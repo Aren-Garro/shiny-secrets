@@ -147,9 +147,13 @@ const patterns = {
     }
 };
 
-// Shannon entropy calculation
+/**
+ * Calculate Shannon entropy for a string
+ * @param {string} str - The string to analyze
+ * @returns {number} - Entropy value in bits
+ */
 function calculateEntropy(str) {
-    if (!str || str.length < 8) return 0;
+    if (!str || typeof str !== 'string' || str.length < 8) return 0;
     const len = str.length;
     const freq = {};
     for (let i = 0; i < len; i++) {
@@ -163,7 +167,12 @@ function calculateEntropy(str) {
     return entropy;
 }
 
-// High entropy detection
+/**
+ * Detect high entropy strings that may be secrets
+ * @param {string} line - Line of code to analyze
+ * @param {number} lineNumber - Line number in file
+ * @returns {Array} - Array of findings
+ */
 function detectHighEntropy(line, lineNumber) {
     const findings = [];
     if (/^[\s#\/\*]*(?:import|function|class|if|for|while)\b/.test(line)) {
@@ -195,8 +204,18 @@ function detectHighEntropy(line, lineNumber) {
     return findings;
 }
 
-// Main scan function
+/**
+ * Scan content for secrets and credentials
+ * @param {string} content - File content to scan
+ * @param {string} filename - Name of file being scanned
+ * @returns {Array} - Array of findings
+ */
 function scanContent(content, filename = 'input') {
+    // Input validation
+    if (typeof content !== 'string') {
+        throw new TypeError(`Expected string content, got ${typeof content}`);
+    }
+    
     const findings = [];
     const lines = content.split('\n');
 
@@ -205,7 +224,16 @@ function scanContent(content, filename = 'input') {
         lines.forEach((line, index) => {
             const localRegex = new RegExp(pattern.regex.source, pattern.regex.flags);
             let match;
+            let iterationCount = 0;
+            const MAX_ITERATIONS = 1000; // Safety limit
+            
             while ((match = localRegex.exec(line)) !== null) {
+                // Prevent infinite loops
+                if (++iterationCount > MAX_ITERATIONS) {
+                    console.warn(`Warning: Regex pattern ${key} exceeded iteration limit on line ${index + 1}`);
+                    break;
+                }
+                
                 const matchValue = match[1] || match[0];
                 findings.push({
                     type: pattern.name,
@@ -216,6 +244,8 @@ function scanContent(content, filename = 'input') {
                     severity: pattern.severity,
                     file: filename
                 });
+                
+                // Handle zero-length matches
                 if (match.index === localRegex.lastIndex) {
                     localRegex.lastIndex++;
                 }
@@ -247,7 +277,11 @@ function scanContent(content, filename = 'input') {
     return uniqueFindings;
 }
 
-// Get color for severity
+/**
+ * Get color for severity level
+ * @param {string} severity - Severity level
+ * @returns {string} - ANSI color code
+ */
 function getSeverityColor(severity) {
     switch(severity) {
         case 'CRITICAL': return colors.red;
@@ -257,7 +291,11 @@ function getSeverityColor(severity) {
     }
 }
 
-// Format and print findings
+/**
+ * Format and print findings to console
+ * @param {Array} findings - Array of findings
+ * @param {Object} options - Output options
+ */
 function printFindings(findings, options = {}) {
     const { verbose = false, json = false } = options;
 
@@ -300,7 +338,10 @@ function printFindings(findings, options = {}) {
     });
 }
 
-// Get staged files for git pre-commit hook
+/**
+ * Get list of staged files in git
+ * @returns {Array} - Array of file paths
+ */
 function getStagedFiles() {
     try {
         const output = execSync('git diff --cached --name-only --diff-filter=ACM', { encoding: 'utf8' });
@@ -311,7 +352,9 @@ function getStagedFiles() {
     }
 }
 
-// Main CLI logic
+/**
+ * Main CLI logic
+ */
 function main() {
     const args = process.argv.slice(2);
     
