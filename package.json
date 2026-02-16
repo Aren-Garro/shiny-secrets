@@ -8,7 +8,7 @@
     "shiny-secrets-v2": "./scanner-v2.js"
   },
   "scripts": {
-    "test": "node test.js",
+    "test": "node test.js && node test-v2.js",
     "scan": "node scanner.js",
     "scan:v2": "node scanner-v2.js",
     "prepublishOnly": "npm test"
@@ -53,12 +53,11 @@
   "files": [
     "scanner.js",
     "scanner-v2.js",
-    "pre-commit.sh",
+    "pre-commit",
     ".shinysecretsrc.example",
     "README.md",
     "LICENSE"
   ],
-  "preferGlobal": true,
   "os": [
     "darwin",
     "linux",

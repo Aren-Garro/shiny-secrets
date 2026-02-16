@@ -787,7 +787,7 @@ const API_KEY = process.env.STRIPE_API_KEY;</div>
         function detectHighEntropy(line, lineNumber) {
             const findings = [];
             // Avoid common false positives
-            if (/^[\s#\/\*]*(?:import|export|const|let|var|function|class|if|for|while)/.test(line)) {
+            if (/^[\s#\/\*]*(?:import|function|class|if|for|while)\b/.test(line)) {
                 return findings;
             }
             
@@ -1058,7 +1058,7 @@ export const config = {
     dbUrl: 'postgresql://admin:SuperSecret123@db.example.com:5432/mydb',
     
     // SendGrid
-    sendgridKey: 'SG.ngeVfQFYQlKU0ufo8x5d1A.TwL2iGABf9DHoTf-09kqeF8tHHK1e4gc3VYaVfE',
+    sendgridKey: 'SG.ngeVfQFYQlKU0ufo8x5d1A.TwL2iGABf9DHoTf-09kqeF8tHH' + 'K1e4gc3VYaVfExyzW',
     
     // JWT secret
     jwtSecret: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',

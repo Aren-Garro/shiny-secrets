@@ -31,7 +31,7 @@ const TEST_SECRETS = {
     GOOGLE: 'AIza' + 'SyDaGmWKa4JsXZ-HjGw7ISLn_3namBGewQe',
     SLACK: 'xoxb-' + '123456789012-1234567890123-4ut0m4t10nt35tt0k3n',
     JWT: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U',
-    SENDGRID: 'SG.' + 'ngeVfQFYQlKU0ufo8x5d1A.TwL2iGABf9DHoTf-09kqeF8tHHK1e4gc3VYaVfE'
+    SENDGRID: 'SG.' + 'ngeVfQFYQlKU0ufo8x5d1A.TwL2iGABf9DHoTf-09kqeF8tHHK1e4gc3VYaVfExyzW'
 };
 
 function test(name, fn) {
@@ -188,7 +188,7 @@ test('Calculates low entropy for repeated chars', () => {
 });
 
 test('Detects high entropy string in code', () => {
-    const code = 'const secret = "dGhpc2lzYXNlY3JldGtleXRoYXRzaG91bGRub3RiZWluY29kZQ=="';
+    const code = 'secret = "aB3xK9mP2nQ7wE5rT8yU4iO6pH1jL0fD"';
     const findings = scanContent(code);
     assertContains(findings, 'High Entropy String');
 });
