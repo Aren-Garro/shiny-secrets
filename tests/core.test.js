@@ -276,6 +276,16 @@ const key2 = "AKIAIOSFODNN7EXAMPLE";
             expect(matchesGlob('a/b/c/d.js', '**/*.js')).toBe(true);
         });
 
+        test('matches root and nested node_modules with leading recursive glob', () => {
+            expect(matchesGlob('node_modules/pkg/index.js', '**/node_modules/**')).toBe(true);
+            expect(matchesGlob('src/node_modules/pkg/index.js', '**/node_modules/**')).toBe(true);
+        });
+
+        test('matches minified javascript at root and nested paths', () => {
+            expect(matchesGlob('bundle.min.js', '**/*.min.js')).toBe(true);
+            expect(matchesGlob('dist/assets/bundle.min.js', '**/*.min.js')).toBe(true);
+        });
+
         test('handles Windows paths', () => {
             expect(matchesGlob('src\\test.js', 'src/*.js')).toBe(true);
         });
@@ -298,6 +308,7 @@ const key2 = "AKIAIOSFODNN7EXAMPLE";
 
         test('excludes node_modules', () => {
             expect(shouldScanFile('node_modules/pkg/index.js', config)).toBe(false);
+            expect(shouldScanFile('src/node_modules/pkg/index.js', config)).toBe(false);
         });
 
         test('excludes minified files', () => {
