@@ -15,12 +15,18 @@ Detect hardcoded API keys, tokens, and credentials in your codebase before they 
 - **21+ Secret Patterns** - AWS, GitHub, Stripe, Google, Slack, JWT, private keys, and more
 - **Entropy Analysis** - Detect high-randomness strings that may be secrets
 - **Zero Dependencies** - Pure Node.js, no external packages
+- **Modular Architecture** - Core scanning logic in `lib/core.js` shared across CLI and browser
+- **TypeScript Definitions** - Full type support in `types/` directory
 - **Fast & Lightweight** - Scans thousands of files in seconds
+- **Directory Scanning** - Recursive scanning with glob pattern support (v2)
 - **Git Integration** - Pre-commit hooks to prevent secret commits
 - **CI/CD Ready** - GitHub Actions, GitLab CI, and custom pipelines
-- **SARIF Output** - Export results for security dashboards
-- **Configurable** - Custom patterns, severity levels, and exclusions
+- **SARIF Output** - Export results for security dashboards (v2)
+- **Configurable** - Custom patterns, severity levels, and exclusions via `.shinysecretsrc`
+- **Flexible Exit Codes** - `--fail-on=critical|high|any|never` (v2)
+- **Allowlist Support** - Baseline management for known findings (v2)
 - **Cross-Platform** - Works on Linux, macOS, and Windows
+- **Dual Versions** - v1 (simple) and v2 (enhanced features)
 
 ---
 
@@ -38,11 +44,17 @@ npm install -g shiny-secrets
 # Scan a single file
 shiny-secrets config.js
 
+# Scan entire directory (v2)
+shiny-secrets-v2 src/
+
 # Scan git staged files (pre-commit)
 shiny-secrets --scan-staged
 
-# Scan with JSON output
-shiny-secrets app.js --json > results.json
+# Scan with flexible exit codes (v2)
+shiny-secrets-v2 --scan-staged --fail-on=high
+
+# Export SARIF for GitHub Code Scanning (v2)
+shiny-secrets-v2 . --sarif > results.sarif
 ```
 
 ---
@@ -54,6 +66,7 @@ shiny-secrets app.js --json > results.json
 ```bash
 npm install -g shiny-secrets
 shiny-secrets --help
+shiny-secrets-v2 --help
 ```
 
 ### Project Dependency
@@ -68,7 +81,8 @@ Add to `package.json`:
 {
   "scripts": {
     "scan": "shiny-secrets --scan-staged",
-    "scan:all": "shiny-secrets src/"
+    "scan:v2": "shiny-secrets-v2 --scan-staged --fail-on=critical",
+    "scan:all": "shiny-secrets-v2 src/"
   }
 }
 ```
@@ -86,7 +100,60 @@ Or use with [husky](https://github.com/typicode/husky):
 ```bash
 npm install --save-dev husky
 npx husky init
-echo "npx shiny-secrets --scan-staged --fail-on-critical" > .husky/pre-commit
+echo "npx shiny-secrets-v2 --scan-staged --fail-on=critical" > .husky/pre-commit
+```
+
+---
+
+## 🏗️ Architecture
+
+### Modular Structure
+
+```
+shiny-secrets/
+├── lib/
+│   ├── core.js              # Shared scanning logic (UMD module)
+│   └── browser-scanner.js   # Browser-specific utilities
+├── types/
+│   └── index.d.ts           # TypeScript definitions
+├── scanner.js               # V1 CLI (simple, single-file)
+├── scanner-v2.js            # V2 CLI (enhanced, directory scanning)
+├── index.html               # Web-based scanner demo
+└── pre-commit               # Git pre-commit hook
+```
+
+### Core Module (`lib/core.js`)
+
+The heart of Shiny Secrets - a UMD module that works in both Node.js and browsers:
+
+- **Pattern Detection** - 21 built-in secret patterns
+- **Entropy Analysis** - Shannon entropy calculation
+- **Deduplication** - Smart finding deduplication
+- **Glob Matching** - File pattern matching with `**` support
+- **Cross-Environment** - Runs in CLI, browser, and as library
+
+```javascript
+const { scanContent, patterns, calculateEntropy } = require('shiny-secrets/lib/core');
+
+const findings = scanContent('const API_KEY = "sk_live_xxxxx"', {
+  filename: 'config.js',
+  enableEntropy: true
+});
+```
+
+### TypeScript Support
+
+Full type definitions available:
+
+```typescript
+import { scanContent, Finding, ScanOptions } from 'shiny-secrets';
+
+const options: ScanOptions = {
+  filename: 'app.ts',
+  enableEntropy: true
+};
+
+const findings: Finding[] = scanContent(code, options);
 ```
 
 ---
@@ -121,20 +188,40 @@ echo "npx shiny-secrets --scan-staged --fail-on-critical" > .husky/pre-commit
 
 ## 🛠️ CLI Options
 
-```bash
-shiny-secrets [options] [file|directory]
-```
+### V1 Scanner (`shiny-secrets`)
 
-### Options
+Simple, single-file scanner:
+
+```bash
+shiny-secrets [options] <file>
+```
 
 | Option | Description |
 |--------|-------------|
 | `--scan-staged` | Scan git staged files (for pre-commit hooks) |
 | `--verbose`, `-v` | Show detailed output with descriptions |
 | `--json` | Output results as JSON |
-| `--sarif` | Output results in SARIF format |
 | `--fail-on-critical` | Exit with code 1 if critical secrets found |
-| `--fail-on=LEVEL` | Exit with code 1 if secrets of LEVEL or higher found (v2 only) |
+| `--help`, `-h` | Show help message |
+
+### V2 Scanner (`shiny-secrets-v2`)
+
+Enhanced scanner with directory scanning:
+
+```bash
+shiny-secrets-v2 [options] [file|directory]
+```
+
+| Option | Description |
+|--------|-------------|
+| `--scan-staged` | Scan git staged files (for pre-commit hooks) |
+| `--verbose`, `-v` | Show detailed output with descriptions |
+| `--json` | Output results as JSON |
+| `--sarif` | Output results in SARIF format (GitHub Code Scanning) |
+| `--fail-on=LEVEL` | Exit with code 1 if secrets of LEVEL or higher found |
+|  | Options: `critical` (default), `high`, `any`, `never` |
+| `--report-threshold=LEVEL` | Minimum severity to report |
+|  | Options: `critical`, `high`, `medium` (default) |
 | `--config PATH` | Path to custom config file |
 | `--exclude PATTERN` | Exclude files matching pattern (can be used multiple times) |
 | `--help`, `-h` | Show help message |
@@ -142,20 +229,23 @@ shiny-secrets [options] [file|directory]
 ### Examples
 
 ```bash
-# Scan specific file with verbose output
+# V1 - Scan specific file with verbose output
 shiny-secrets config.js --verbose
 
-# Scan directory excluding tests
-shiny-secrets src/ --exclude "**/*.test.js"
+# V2 - Scan directory excluding tests
+shiny-secrets-v2 src/ --exclude "**/*.test.js"
 
-# Use custom config
-shiny-secrets . --config .shinysecretsrc
+# V2 - Use custom config
+shiny-secrets-v2 . --config .shinysecretsrc
 
-# Export SARIF for security dashboard
-shiny-secrets src/ --sarif > results.sarif
+# V2 - Export SARIF for security dashboard
+shiny-secrets-v2 src/ --sarif > results.sarif
 
-# Fail on high or critical secrets
+# V2 - Fail on high or critical secrets
 shiny-secrets-v2 --scan-staged --fail-on=high
+
+# V2 - Report only critical secrets
+shiny-secrets-v2 . --report-threshold=critical
 ```
 
 ---
@@ -166,16 +256,40 @@ Create a `.shinysecretsrc` file in your project root:
 
 ```json
 {
+  "failOn": "critical",
+  "reportThreshold": "medium",
   "exclude": [
     "**/node_modules/**",
     "**/*.min.js",
     "**/dist/**",
     "**/*.test.js"
   ],
-  "severity": {
-    "critical": ["aws_access_key", "stripe_live_key"],
-    "high": ["github_token", "slack_token"],
-    "medium": ["jwt_token"]
+  "include": [
+    "*.js",
+    "*.ts",
+    "*.jsx",
+    "*.tsx",
+    "*.py",
+    "*.env",
+    "*.config"
+  ],
+  "allowlist": [
+    "config.js:15:AWS Access Key"
+  ],
+  "allowPatterns": [
+    "EXAMPLE",
+    "TEST",
+    "DEMO",
+    "PLACEHOLDER"
+  ],
+  "disabledPatterns": [
+    "jwt_token"
+  ],
+  "entropy": {
+    "enabled": true,
+    "threshold": 4.7,
+    "minLength": 20,
+    "maxLength": 100
   },
   "customPatterns": [
     {
@@ -183,13 +297,25 @@ Create a `.shinysecretsrc` file in your project root:
       "regex": "CUSTOM_[A-Z0-9]{32}",
       "severity": "HIGH"
     }
-  ],
-  "entropyThreshold": 4.7,
-  "maxFileSize": 5242880
+  ]
 }
 ```
 
 See [`.shinysecretsrc.example`](.shinysecretsrc.example) for all options.
+
+### Configuration Options
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `failOn` | string | Exit code behavior: `critical`, `high`, `any`, `never` |
+| `reportThreshold` | string | Minimum severity to report: `critical`, `high`, `medium` |
+| `exclude` | array | Glob patterns to exclude |
+| `include` | array | Glob patterns to include |
+| `allowlist` | array | Known findings to ignore (format: `file:line:type`) |
+| `allowPatterns` | array | Patterns in matches to ignore (e.g., `EXAMPLE`, `TEST`) |
+| `disabledPatterns` | array | Built-in patterns to disable |
+| `entropy` | object | Entropy detection settings |
+| `customPatterns` | array | Custom secret patterns to add |
 
 ---
 
@@ -211,7 +337,29 @@ jobs:
         with:
           node-version: '18'
       - run: npm install -g shiny-secrets
-      - run: shiny-secrets . --fail-on-critical
+      - run: shiny-secrets-v2 . --fail-on=critical
+```
+
+### GitHub Code Scanning (SARIF)
+
+```yaml
+name: Code Scanning
+
+on: [push, pull_request]
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      - run: npm install -g shiny-secrets
+      - run: shiny-secrets-v2 . --sarif > results.sarif
+      - uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: results.sarif
 ```
 
 ### GitLab CI
@@ -221,7 +369,7 @@ scan-secrets:
   stage: test
   script:
     - npm install -g shiny-secrets
-    - shiny-secrets . --fail-on-critical --json > secrets.json
+    - shiny-secrets-v2 . --fail-on=critical --json > secrets.json
   artifacts:
     paths:
       - secrets.json
@@ -234,7 +382,7 @@ Add to `.git/hooks/pre-commit`:
 
 ```bash
 #!/bin/bash
-node_modules/.bin/shiny-secrets --scan-staged --fail-on-critical
+shiny-secrets-v2 --scan-staged --fail-on=critical
 if [ $? -ne 0 ]; then
   echo "❌ Secret detected! Commit blocked."
   exit 1
@@ -248,19 +396,16 @@ fi
 ### Default (Human-Readable)
 
 ```
-❌ Found 2 secrets
+❌ Found 2 secrets across 1 file(s)
    🔥 1 CRITICAL
    ⚠️  1 HIGH
 
-1. AWS Access Key [CRITICAL]
-   File: config.js
-   Line: 15
-   Code: const AWS_KEY = "AKIAIOSFODNN7EXAMPLE";
+config.js
+  15:1 AWS Access Key [CRITICAL]
+    const AWS_KEY = "AKIAIOSFODNN7EXAMPLE";
 
-2. GitHub Token [HIGH]
-   File: deploy.sh
-   Line: 42
-   Code: export GITHUB_TOKEN="ghp_xxxxxxxxxxxxxxxxxxxx"
+  42:10 GitHub Token [HIGH]
+    export GITHUB_TOKEN="ghp_xxxxxxxxxxxxxxxxxxxx"
 ```
 
 ### JSON
@@ -272,6 +417,7 @@ fi
     "severity": "CRITICAL",
     "file": "config.js",
     "line": 15,
+    "column": 1,
     "match": "AKIAIOSFODNN7EXAMPLE",
     "content": "const AWS_KEY = \"AKIAIOSFODNN7EXAMPLE\";",
     "description": "AWS Access Key ID"
@@ -279,22 +425,36 @@ fi
 ]
 ```
 
-### SARIF
+### SARIF (GitHub Code Scanning)
 
 ```json
 {
   "version": "2.1.0",
-  "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
   "runs": [{
-    "tool": { "driver": { "name": "Shiny Secrets" }},
+    "tool": {
+      "driver": {
+        "name": "Shiny Secrets",
+        "version": "2.1.0",
+        "rules": [{
+          "id": "aws-access-key",
+          "name": "AWS Access Key",
+          "shortDescription": { "text": "AWS Access Key ID" }
+        }]
+      }
+    },
     "results": [{
-      "ruleId": "aws_access_key",
+      "ruleId": "aws-access-key",
       "level": "error",
-      "message": { "text": "AWS Access Key detected" },
+      "message": { "text": "AWS Access Key: AWS Access Key ID" },
       "locations": [{
         "physicalLocation": {
           "artifactLocation": { "uri": "config.js" },
-          "region": { "startLine": 15 }
+          "region": {
+            "startLine": 15,
+            "startColumn": 1,
+            "snippet": { "text": "const AWS_KEY = ..." }
+          }
         }
       }]
     }]
@@ -309,8 +469,11 @@ fi
 ### Running Tests
 
 ```bash
-# Run all tests
+# Run all tests (Jest)
 npm test
+
+# Run legacy tests
+npm run test:legacy
 
 # Run v1 tests only
 npm run test:v1
@@ -318,11 +481,20 @@ npm run test:v1
 # Run v2 tests only
 npm run test:v2
 
+# Run with coverage
+npm run test:coverage
+
+# Watch mode
+npm run test:watch
+
 # Run linter
 npm run lint
 
 # Validate package
 npm run validate
+
+# TypeScript type checking
+npm run typecheck
 ```
 
 See [TESTING.md](TESTING.md) for detailed testing documentation.
@@ -331,20 +503,65 @@ See [TESTING.md](TESTING.md) for detailed testing documentation.
 
 ```
 shiny-secrets/
-├── scanner.js          # V1 CLI scanner (stable)
-├── scanner-v2.js       # V2 scanner (enhanced features)
-├── test.js             # V1 test suite
-├── test-v2.js          # V2 test suite
-├── pre-commit          # Git pre-commit hook
-├── index.html          # Web-based scanner demo
-├── .eslintrc.js        # ESLint configuration
+├── lib/
+│   ├── core.js              # Shared scanning logic (UMD)
+│   └── browser-scanner.js   # Browser-specific utilities
+├── types/
+│   └── index.d.ts           # TypeScript definitions
+├── tests/                   # Jest test suites
+├── scanner.js               # V1 CLI scanner (stable)
+├── scanner-v2.js            # V2 scanner (enhanced features)
+├── test.js                  # V1 legacy test suite
+├── test-v2.js               # V2 legacy test suite
+├── pre-commit               # Git pre-commit hook
+├── index.html               # Web-based scanner demo
+├── .eslintrc.js             # ESLint configuration
+├── jest.config.js           # Jest configuration
+├── tsconfig.json            # TypeScript configuration
 ├── .shinysecretsrc.example  # Example config
-├── TESTING.md          # Testing documentation
-├── ROADMAP.md          # Feature roadmap
-├── CHANGELOG.md        # Version history
+├── TESTING.md               # Testing documentation
+├── ROADMAP.md               # Feature roadmap
+├── CHANGELOG.md             # Version history
 └── docs/
-    └── archive/        # Archived documentation
+    └── archive/             # Archived documentation
 ```
+
+---
+
+## 🆚 Version Comparison
+
+### V1 vs V2 Feature Matrix
+
+| Feature | V1 | V2 |
+|---------|----:|----:|
+| Detection Patterns | 21 | 21 |
+| Single File Scan | ✓ | ✓ |
+| Directory Scan | ✗ | ✓ |
+| Git Staged Scan | ✓ | ✓ |
+| JSON Output | ✓ | ✓ |
+| SARIF Output | ✗ | ✓ |
+| Config File | ✗ | ✓ |
+| Allowlist | ✗ | ✓ |
+| Flexible Exit Codes | ✗ | ✓ |
+| Report Threshold | ✗ | ✓ |
+| Glob Patterns | ✗ | ✓ |
+| Custom Patterns | ✗ | ✓ |
+
+### Which Version to Use?
+
+**Use V1 (`shiny-secrets`) when:**
+- Simple single-file scanning
+- Quick checks in development
+- Minimal configuration needed
+- Pre-commit hooks for small projects
+
+**Use V2 (`shiny-secrets-v2`) when:**
+- Directory/project-wide scanning
+- CI/CD pipelines
+- GitHub Code Scanning integration
+- Advanced configuration needs
+- Allowlist management
+- Flexible exit code control
 
 ---
 
@@ -354,6 +571,9 @@ shiny-secrets/
 - [Roadmap](ROADMAP.md) - Planned features and improvements
 - [Changelog](CHANGELOG.md) - Version history
 - [Bug Reports](BUG_REPORT.md) - How to report bugs
+- [Migration Guide](MIGRATION.md) - Upgrading from v1 to v2
+- [Implementation Summary](IMPLEMENTATION_SUMMARY.md) - Technical details
+- [Refactoring Notes](REFACTORING.md) - Code quality improvements
 - [Archived Docs](docs/archive/) - Historical documentation
 
 ---
@@ -366,9 +586,10 @@ Contributions are welcome! Please:
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Run tests (`npm test`)
 4. Run linter (`npm run lint`)
-5. Commit changes (`git commit -m 'Add amazing feature'`)
-6. Push to branch (`git push origin feature/amazing-feature`)
-7. Open a Pull Request
+5. Run type check (`npm run typecheck`)
+6. Commit changes (`git commit -m 'Add amazing feature'`)
+7. Push to branch (`git push origin feature/amazing-feature`)
+8. Open a Pull Request
 
 ---
 
