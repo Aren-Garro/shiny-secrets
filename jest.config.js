@@ -14,7 +14,7 @@ module.exports = {
     ],
 
     // Coverage configuration
-    collectCoverage: true,
+    collectCoverage: false,
     coverageDirectory: 'coverage',
     coverageReporters: ['text', 'lcov', 'html'],
     
@@ -29,7 +29,7 @@ module.exports = {
     ],
 
     // Coverage thresholds
-    coverageThresholds: {
+    coverageThreshold: {
         global: {
             branches: 80,
             functions: 80,
