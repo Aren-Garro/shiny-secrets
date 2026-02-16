@@ -89,6 +89,36 @@ const defaultConfig = {
     disabledPatterns: []
 };
 
+const MERGE_ARRAY_KEYS = new Set([
+    'exclude',
+    'include',
+    'allowlist',
+    'allowPatterns',
+    'disabledPatterns'
+]);
+
+function mergeConfig(config = {}) {
+    const merged = {
+        ...defaultConfig,
+        ...config,
+        entropy: {
+            ...defaultConfig.entropy,
+            ...(config.entropy || {})
+        }
+    };
+
+    for (const key of MERGE_ARRAY_KEYS) {
+        if (!Array.isArray(config[key])) {
+            merged[key] = [...defaultConfig[key]];
+            continue;
+        }
+
+        merged[key] = [...defaultConfig[key], ...config[key]];
+    }
+
+    return merged;
+}
+
 // Load configuration
 function loadConfig(configPath = null) {
     const searchPaths = [
@@ -105,13 +135,13 @@ function loadConfig(configPath = null) {
                 const content = fs.readFileSync(p, 'utf8');
                 // Simple YAML/JSON parser
                 const config = parseConfig(content);
-                return { ...defaultConfig, ...config };
+                return mergeConfig(config);
             } catch (error) {
                 console.error(`${colors.yellow}Warning: Failed to parse config ${p}: ${error.message}${colors.reset}`);
             }
         }
     }
-    return defaultConfig;
+    return mergeConfig();
 }
 
 // Simple config parser (YAML-like)
