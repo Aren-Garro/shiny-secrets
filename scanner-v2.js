@@ -1,40 +1,21 @@
 #!/usr/bin/env node
 
-/**
- * Shiny Secrets v2.1 - Enhanced CLI Secret Scanner
- * 
- * New features:
- * - Configuration file support (.shinysecretsrc)
- * - Directory scanning with glob patterns
- * - Flexible exit codes (--fail-on=critical|high|any)
- * - SARIF output for GitHub Code Scanning
- * - Allowlist/baseline support
- * - Standard ignore patterns (.gitignore)
- * - Multi-file scanning
- */
-
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
-// Version
 const VERSION = '2.1.0';
 
-// ANSI colors
 const colors = {
     reset: '\x1b[0m',
     red: '\x1b[31m',
     green: '\x1b[32m',
     yellow: '\x1b[33m',
     blue: '\x1b[34m',
-    magenta: '\x1b[35m',
-    cyan: '\x1b[36m',
     bold: '\x1b[1m'
 };
 
 const {
-    patterns,
-    calculateEntropy,
     scanPatterns,
     scanEntropy,
     deduplicateFindings,
@@ -42,7 +23,6 @@ const {
     shouldScanFile
 } = require('./lib/core');
 
-// Default configuration
 const defaultConfig = {
     failOn: 'critical',
     reportThreshold: 'medium',
@@ -71,39 +51,66 @@ const defaultConfig = {
     disabledPatterns: []
 };
 
-const MERGE_ARRAY_KEYS = new Set([
-    'exclude',
-    'include',
-    'allowlist',
-    'allowPatterns',
-    'disabledPatterns'
-]);
+const MERGE_KEYS = new Set(['exclude', 'include', 'allowlist', 'allowPatterns', 'disabledPatterns']);
 
 function mergeConfig(config = {}) {
     const merged = {
         ...defaultConfig,
         ...config,
-        entropy: {
-            ...defaultConfig.entropy,
-            ...(config.entropy || {})
-        }
+        entropy: { ...defaultConfig.entropy, ...(config.entropy || {}) }
     };
 
-    for (const key of MERGE_ARRAY_KEYS) {
-        if (!Array.isArray(config[key])) {
-            merged[key] = [...defaultConfig[key]];
-            continue;
-        }
-
-        merged[key] = [...defaultConfig[key], ...config[key]];
+    for (const key of MERGE_KEYS) {
+        merged[key] = Array.isArray(config[key]) 
+            ? [...defaultConfig[key], ...config[key]] 
+            : [...defaultConfig[key]];
     }
 
     return merged;
 }
 
-// Load configuration
+function parseConfig(content) {
+    const config = {};
+    const lines = content.split('\n');
+    let section = null;
+    let array = null;
+
+    for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('#')) continue;
+
+        if (trimmed.endsWith(':') && !trimmed.includes(': ')) {
+            section = trimmed.slice(0, -1);
+            config[section] = {};
+            array = null;
+        } else if (trimmed.startsWith('- ')) {
+            const value = trimmed.slice(2).replace(/["']/g, '');
+            if (!array) {
+                array = [];
+                if (section) config[section] = array;
+            }
+            array.push(value);
+        } else if (trimmed.includes(': ')) {
+            const [key, ...parts] = trimmed.split(': ');
+            let value = parts.join(': ').replace(/["']/g, '');
+            
+            if (value === 'true') value = true;
+            else if (value === 'false') value = false;
+            else if (!isNaN(value) && value !== '') value = +value;
+
+            if (section && typeof config[section] === 'object' && !Array.isArray(config[section])) {
+                config[section][key] = value;
+            } else {
+                config[key] = value;
+            }
+            array = null;
+        }
+    }
+    return config;
+}
+
 function loadConfig(configPath = null) {
-    const searchPaths = [
+    const paths = [
         configPath,
         '.shinysecretsrc',
         '.shinysecretsrc.json',
@@ -111,65 +118,18 @@ function loadConfig(configPath = null) {
         path.join(process.env.HOME || '', '.shinysecretsrc')
     ].filter(Boolean);
 
-    for (const p of searchPaths) {
+    for (const p of paths) {
         if (fs.existsSync(p)) {
             try {
-                const content = fs.readFileSync(p, 'utf8');
-                // Simple YAML/JSON parser
-                const config = parseConfig(content);
-                return mergeConfig(config);
+                return mergeConfig(parseConfig(fs.readFileSync(p, 'utf8')));
             } catch (error) {
-                console.error(`${colors.yellow}Warning: Failed to parse config ${p}: ${error.message}${colors.reset}`);
+                console.error(`${colors.yellow}Config parse failed ${p}: ${error.message}${colors.reset}`);
             }
         }
     }
     return mergeConfig();
 }
 
-// Simple config parser (YAML-like)
-function parseConfig(content) {
-    const config = {};
-    const lines = content.split('\n');
-    let currentSection = null;
-    let currentArray = null;
-
-    for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed || trimmed.startsWith('#')) continue;
-
-        if (trimmed.endsWith(':') && !trimmed.includes(': ')) {
-            currentSection = trimmed.slice(0, -1);
-            config[currentSection] = {};
-            currentArray = null;
-        } else if (trimmed.startsWith('- ')) {
-            const value = trimmed.slice(2).replace(/["']/g, '');
-            if (!currentArray) {
-                currentArray = [];
-                if (currentSection) {
-                    config[currentSection] = currentArray;
-                }
-            }
-            currentArray.push(value);
-        } else if (trimmed.includes(': ')) {
-            const [key, ...valueParts] = trimmed.split(': ');
-            let value = valueParts.join(': ').replace(/["']/g, '');
-            
-            if (value === 'true') value = true;
-            else if (value === 'false') value = false;
-            else if (!isNaN(value) && value !== '') value = parseFloat(value);
-
-            if (currentSection && typeof config[currentSection] === 'object' && !Array.isArray(config[currentSection])) {
-                config[currentSection][key] = value;
-            } else {
-                config[key] = value;
-            }
-            currentArray = null;
-        }
-    }
-    return config;
-}
-
-// Recursively scan directory
 function scanDirectory(dirPath, config, results = []) {
     if (!fs.existsSync(dirPath)) return results;
     
@@ -178,16 +138,12 @@ function scanDirectory(dirPath, config, results = []) {
     if (stat.isFile()) {
         if (shouldScanFile(dirPath, config)) {
             try {
-                const content = fs.readFileSync(dirPath, 'utf8');
-                const findings = scanContent(content, dirPath, config);
+                const findings = scanContent(fs.readFileSync(dirPath, 'utf8'), dirPath, config);
                 results.push(...findings);
-            } catch (error) {
-                // Skip binary files or unreadable files
-            }
+            } catch {}
         }
     } else if (stat.isDirectory()) {
-        const items = fs.readdirSync(dirPath);
-        for (const item of items) {
+        for (const item of fs.readdirSync(dirPath)) {
             scanDirectory(path.join(dirPath, item), config, results);
         }
     }
@@ -195,31 +151,20 @@ function scanDirectory(dirPath, config, results = []) {
     return results;
 }
 
-// Check if finding is allowlisted
 function isAllowlisted(finding, config) {
-    // Check baseline allowlist
     const key = `${finding.file}:${finding.line}:${finding.type}`;
     if (config.allowlist.includes(key)) return true;
-    
-    // Check pattern allowlist
-    for (const pattern of config.allowPatterns) {
-        if (finding.match.includes(pattern)) return true;
-    }
-    
-    return false;
+    return config.allowPatterns.some(p => finding.match.includes(p));
 }
 
-// Main scan function
 function scanContent(content, filename = 'input', config = defaultConfig) {
-    let findings = [];
-
-    findings.push(...scanPatterns(content, {
+    let findings = scanPatterns(content, {
         filename,
         disabledPatterns: config.disabledPatterns || []
-    }));
+    });
 
     if (config.entropy.enabled) {
-        findings.push(...scanEntropy(content, {
+        findings = findings.concat(scanEntropy(content, {
             filename,
             minLength: config.entropy.minLength,
             maxLength: config.entropy.maxLength,
@@ -228,22 +173,19 @@ function scanContent(content, filename = 'input', config = defaultConfig) {
         }));
     }
 
-    findings = findings.filter(finding => !isAllowlisted(finding, config));
-    return sortFindings(deduplicateFindings(findings));
+    return sortFindings(deduplicateFindings(findings.filter(f => !isAllowlisted(f, config))));
 }
 
-// Filter findings by severity threshold
 function filterBySeverity(findings, threshold) {
-    const severityLevels = { 'CRITICAL': 3, 'HIGH': 2, 'MEDIUM': 1 };
-    const minLevel = severityLevels[threshold.toUpperCase()] || 1;
-    return findings.filter(f => (severityLevels[f.severity] || 0) >= minLevel);
+    const levels = { CRITICAL: 3, HIGH: 2, MEDIUM: 1 };
+    const min = levels[threshold.toUpperCase()] || 1;
+    return findings.filter(f => (levels[f.severity] || 0) >= min);
 }
 
-// Generate SARIF output
-function generateSARIF(findings, config) {
+function generateSARIF(findings) {
     const rules = {};
     
-    findings.forEach(finding => {
+    for (const finding of findings) {
         const ruleId = finding.type.toLowerCase().replace(/\s+/g, '-');
         if (!rules[ruleId]) {
             rules[ruleId] = {
@@ -254,36 +196,10 @@ function generateSARIF(findings, config) {
                 defaultConfiguration: {
                     level: finding.severity === 'CRITICAL' ? 'error' : finding.severity === 'HIGH' ? 'warning' : 'note'
                 },
-                properties: {
-                    tags: ['security', 'secrets'],
-                    precision: 'high'
-                }
+                properties: { tags: ['security', 'secrets'], precision: 'high' }
             };
         }
-    });
-
-    const results = findings.map(finding => ({
-        ruleId: finding.type.toLowerCase().replace(/\s+/g, '-'),
-        level: finding.severity === 'CRITICAL' ? 'error' : finding.severity === 'HIGH' ? 'warning' : 'note',
-        message: {
-            text: `${finding.type}: ${finding.description}`
-        },
-        locations: [{
-            physicalLocation: {
-                artifactLocation: {
-                    uri: finding.file,
-                    uriBaseId: '%SRCROOT%'
-                },
-                region: {
-                    startLine: finding.line,
-                    startColumn: finding.column || 1,
-                    snippet: {
-                        text: finding.content
-                    }
-                }
-            }
-        }]
-    }));
+    }
 
     return {
         version: '2.1.0',
@@ -297,70 +213,71 @@ function generateSARIF(findings, config) {
                     rules: Object.values(rules)
                 }
             },
-            results: results
+            results: findings.map(f => ({
+                ruleId: f.type.toLowerCase().replace(/\s+/g, '-'),
+                level: f.severity === 'CRITICAL' ? 'error' : f.severity === 'HIGH' ? 'warning' : 'note',
+                message: { text: `${f.type}: ${f.description}` },
+                locations: [{
+                    physicalLocation: {
+                        artifactLocation: { uri: f.file, uriBaseId: '%SRCROOT%' },
+                        region: {
+                            startLine: f.line,
+                            startColumn: f.column || 1,
+                            snippet: { text: f.content }
+                        }
+                    }
+                }]
+            }))
         }]
     };
 }
 
-// Determine exit code
 function determineExitCode(findings, failOn) {
-    if (failOn === 'never') return 0;
-    if (findings.length === 0) return 0;
+    if (failOn === 'never' || findings.length === 0) return 0;
     
     const hasCritical = findings.some(f => f.severity === 'CRITICAL');
     const hasHigh = findings.some(f => f.severity === 'HIGH');
     
-    switch(failOn.toLowerCase()) {
-        case 'critical':
-            return hasCritical ? 1 : 0;
-        case 'high':
-            return (hasCritical || hasHigh) ? 1 : 0;
-        case 'any':
-            return findings.length > 0 ? 1 : 0;
-        default:
-            return hasCritical ? 1 : 0;
+    switch (failOn.toLowerCase()) {
+        case 'critical': return hasCritical ? 1 : 0;
+        case 'high': return (hasCritical || hasHigh) ? 1 : 0;
+        case 'any': return 1;
+        default: return hasCritical ? 1 : 0;
     }
 }
 
-// Print findings
 function printFindings(findings, options = {}) {
-    const { verbose = false, json = false, sarif = false, config } = options;
+    const { verbose = false, json = false, sarif = false } = options;
 
-    if (sarif) {
-        console.log(JSON.stringify(generateSARIF(findings, config), null, 2));
-        return;
-    }
-
-    if (json) {
-        console.log(JSON.stringify(findings, null, 2));
-        return;
-    }
+    if (sarif) return console.log(JSON.stringify(generateSARIF(findings), null, 2));
+    if (json) return console.log(JSON.stringify(findings, null, 2));
 
     if (findings.length === 0) {
         console.log(`${colors.green}${colors.bold}✓ No secrets detected${colors.reset}`);
         return;
     }
 
-    const criticalCount = findings.filter(f => f.severity === 'CRITICAL').length;
-    const highCount = findings.filter(f => f.severity === 'HIGH').length;
-    const mediumCount = findings.filter(f => f.severity === 'MEDIUM').length;
+    const counts = {
+        CRITICAL: findings.filter(f => f.severity === 'CRITICAL').length,
+        HIGH: findings.filter(f => f.severity === 'HIGH').length,
+        MEDIUM: findings.filter(f => f.severity === 'MEDIUM').length
+    };
 
     console.log(`${colors.red}${colors.bold}❌ Found ${findings.length} secret${findings.length > 1 ? 's' : ''} across ${new Set(findings.map(f => f.file)).size} file(s)${colors.reset}`);
-    if (criticalCount > 0) console.log(`${colors.red}   🔥 ${criticalCount} CRITICAL${colors.reset}`);
-    if (highCount > 0) console.log(`${colors.yellow}   ⚠️  ${highCount} HIGH${colors.reset}`);
-    if (mediumCount > 0) console.log(`${colors.blue}   ℹ️  ${mediumCount} MEDIUM${colors.reset}`);
+    if (counts.CRITICAL) console.log(`${colors.red}   🔥 ${counts.CRITICAL} CRITICAL${colors.reset}`);
+    if (counts.HIGH) console.log(`${colors.yellow}   ⚠️  ${counts.HIGH} HIGH${colors.reset}`);
+    if (counts.MEDIUM) console.log(`${colors.blue}   ℹ️  ${counts.MEDIUM} MEDIUM${colors.reset}`);
     console.log('');
 
-    // Group by file
     const byFile = {};
-    findings.forEach(f => {
+    for (const f of findings) {
         if (!byFile[f.file]) byFile[f.file] = [];
         byFile[f.file].push(f);
-    });
+    }
 
-    Object.entries(byFile).forEach(([file, fileFindings]) => {
+    for (const [file, fileFindings] of Object.entries(byFile)) {
         console.log(`${colors.bold}${file}${colors.reset}`);
-        fileFindings.forEach((finding, index) => {
+        for (const finding of fileFindings) {
             const color = finding.severity === 'CRITICAL' ? colors.red : finding.severity === 'HIGH' ? colors.yellow : colors.blue;
             console.log(`${color}  ${finding.line}:${finding.column || 1} ${finding.type} [${finding.severity}]${colors.reset}`);
             if (verbose) {
@@ -370,48 +287,39 @@ function printFindings(findings, options = {}) {
             }
             console.log(`    ${finding.content.substring(0, 100)}${finding.content.length > 100 ? '...' : ''}`);
             console.log('');
-        });
-    });
+        }
+    }
 }
 
-// Main CLI
 function main() {
     const args = process.argv.slice(2);
     
-    // Show help
     if (args.length === 0 || args.includes('--help') || args.includes('-h')) {
         console.log(`
-${colors.bold}Shiny Secrets v${VERSION} - Enhanced CLI Secret Scanner${colors.reset}
+${colors.bold}Shiny Secrets v${VERSION}${colors.reset}
 
 Usage:
-  shiny-secrets <file|directory>         Scan file or directory
-  shiny-secrets --scan-staged            Scan git staged files
-  shiny-secrets --help                   Show this help
+  shiny-secrets <file|dir>        Scan file or directory
+  shiny-secrets --scan-staged     Scan git staged files
+  shiny-secrets --help            Show this help
 
 Options:
-  --verbose, -v                          Show detailed output
-  --json                                 Output as JSON
-  --sarif                                Output as SARIF (GitHub Code Scanning)
-  --config <path>                        Config file path
-  --fail-on=<level>                      Exit with 1 if secrets found
-                                         Options: critical, high, any, never
-                                         Default: critical
-  --exclude <pattern>                    Exclude pattern (can be repeated)
-  --report-threshold=<level>             Minimum severity to report
-                                         Options: critical, high, medium
-                                         Default: medium
+  --verbose, -v                   Detailed output
+  --json                          JSON output
+  --sarif                         SARIF output (GitHub Code Scanning)
+  --config <path>                 Config file path
+  --fail-on=<level>               Exit 1 if secrets found: critical, high, any, never (default: critical)
+  --exclude <pattern>             Exclude pattern (repeatable)
+  --report-threshold=<level>      Min severity: critical, high, medium (default: medium)
 
 Examples:
   shiny-secrets src/
-  shiny-secrets config.js --verbose
   shiny-secrets . --fail-on=high --sarif
   shiny-secrets --scan-staged --fail-on=critical
-
 `);
         process.exit(0);
     }
 
-    // Parse options
     const options = {
         verbose: args.includes('--verbose') || args.includes('-v'),
         json: args.includes('--json'),
@@ -423,67 +331,50 @@ Examples:
         excludePatterns: []
     };
 
-    // Parse --fail-on
     const failOnArg = args.find(a => a.startsWith('--fail-on='));
     if (failOnArg) options.failOn = failOnArg.split('=')[1];
 
-    // Parse --report-threshold
     const thresholdArg = args.find(a => a.startsWith('--report-threshold='));
     if (thresholdArg) options.reportThreshold = thresholdArg.split('=')[1];
 
-    // Parse --config
     const configIdx = args.indexOf('--config');
-    if (configIdx !== -1 && args[configIdx + 1]) {
-        options.configPath = args[configIdx + 1];
-    }
+    if (configIdx !== -1 && args[configIdx + 1]) options.configPath = args[configIdx + 1];
 
-    // Parse --exclude
     args.forEach((arg, i) => {
-        if (arg === '--exclude' && args[i + 1]) {
-            options.excludePatterns.push(args[i + 1]);
-        }
+        if (arg === '--exclude' && args[i + 1]) options.excludePatterns.push(args[i + 1]);
     });
 
-    // Load config
     let config = loadConfig(options.configPath);
     if (options.failOn) config.failOn = options.failOn;
     if (options.reportThreshold) config.reportThreshold = options.reportThreshold;
-    if (options.excludePatterns.length > 0) {
-        config.exclude = [...config.exclude, ...options.excludePatterns];
-    }
+    if (options.excludePatterns.length) config.exclude = [...config.exclude, ...options.excludePatterns];
 
-    let allFindings = [];
+    let findings = [];
 
     if (options.scanStaged) {
-        // Scan git staged files
         try {
             const output = execSync('git diff --cached --name-only --diff-filter=ACM', { encoding: 'utf8' });
             const files = output.split('\n').filter(f => f.trim());
             
             if (files.length === 0) {
-                console.log(`${colors.yellow}No staged files to scan${colors.reset}`);
+                console.log(`${colors.yellow}No staged files${colors.reset}`);
                 process.exit(0);
             }
 
-            console.log(`${colors.blue}Scanning ${files.length} staged file(s)...${colors.reset}\n`);
+            console.log(`${colors.blue}Scanning ${files.length} staged file(s)${colors.reset}\n`);
             
-            files.forEach(file => {
+            for (const file of files) {
                 if (shouldScanFile(file, config) && fs.existsSync(file)) {
                     try {
-                        const content = fs.readFileSync(file, 'utf8');
-                        const findings = scanContent(content, file, config);
-                        allFindings.push(...findings);
-                    } catch (error) {
-                        // Skip unreadable files
-                    }
+                        findings.push(...scanContent(fs.readFileSync(file, 'utf8'), file, config));
+                    } catch {}
                 }
-            });
+            }
         } catch (error) {
             console.error(`${colors.red}Error: ${error.message}${colors.reset}`);
             process.exit(1);
         }
     } else {
-        // Scan specified path
         const target = args.find(a => !a.startsWith('--') && a !== '-v');
         if (!target) {
             console.error(`${colors.red}Error: No file or directory specified${colors.reset}`);
@@ -495,32 +386,14 @@ Examples:
             process.exit(1);
         }
 
-        allFindings = scanDirectory(target, config);
+        findings = scanDirectory(target, config);
     }
 
-    // Filter by report threshold
-    allFindings = filterBySeverity(allFindings, config.reportThreshold);
-
-    // Print results
-    printFindings(allFindings, { ...options, config });
-
-    // Exit with appropriate code
-    const exitCode = determineExitCode(allFindings, config.failOn);
-    process.exit(exitCode);
+    findings = filterBySeverity(findings, config.reportThreshold);
+    printFindings(findings, options);
+    process.exit(determineExitCode(findings, config.failOn));
 }
 
-// Run if executed directly
-if (require.main === module) {
-    main();
-}
+if (require.main === module) main();
 
-// Export for testing
-module.exports = { 
-    scanContent, 
-    scanDirectory,
-    loadConfig, 
-    patterns, 
-    calculateEntropy,
-    generateSARIF,
-    VERSION
-};
+module.exports = { scanContent, scanDirectory, loadConfig, generateSARIF, VERSION };
