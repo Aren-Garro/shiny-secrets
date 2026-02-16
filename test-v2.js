@@ -89,6 +89,54 @@ allowPatterns:
     }
 }
 
+
+function testEntropyConfigDeepMerge() {
+    const configContent = `
+# Partial entropy config
+entropy:
+  threshold: 5.2
+`;
+
+    const tempConfig = path.join(__dirname, '.test-config-v2-entropy');
+    fs.writeFileSync(tempConfig, configContent);
+
+    try {
+        const config = loadConfig(tempConfig);
+        assert.strictEqual(config.entropy.threshold, 5.2);
+        assert.strictEqual(config.entropy.enabled, true);
+        assert.strictEqual(config.entropy.minLength, 20);
+        assert.strictEqual(config.entropy.maxLength, 100);
+    } finally {
+        fs.unlinkSync(tempConfig);
+    }
+}
+
+
+function testArrayConfigMergeBehavior() {
+    const configContent = `
+exclude:
+  - "custom-exclude/**"
+allowPatterns:
+  - "CUSTOM"
+disabledPatterns:
+  - "github_token"
+`;
+
+    const tempConfig = path.join(__dirname, '.test-config-v2-arrays');
+    fs.writeFileSync(tempConfig, configContent);
+
+    try {
+        const config = loadConfig(tempConfig);
+        assert(config.exclude.includes('**/node_modules/**'));
+        assert(config.exclude.includes('custom-exclude/**'));
+        assert(config.allowPatterns.includes('EXAMPLE'));
+        assert(config.allowPatterns.includes('CUSTOM'));
+        assert(config.disabledPatterns.includes('github_token'));
+    } finally {
+        fs.unlinkSync(tempConfig);
+    }
+}
+
 // Test allowlist filtering
 function testAllowlistFiltering() {
     const config = {
@@ -281,6 +329,8 @@ console.log(`\n${colors.bold}${colors.blue}Shiny Secrets v2.0 Test Suite${colors
 
 console.log(`${colors.bold}Configuration Tests:${colors.reset}`);
 test('Config file parsing', testConfigParsing);
+test('Entropy config deep merge preserves defaults', testEntropyConfigDeepMerge);
+test('Array config merge appends defaults and overrides', testArrayConfigMergeBehavior);
 test('Allowlist filtering', testAllowlistFiltering);
 test('Disabled patterns', testDisabledPatterns);
 
