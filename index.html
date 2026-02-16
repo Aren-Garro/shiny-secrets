@@ -258,6 +258,34 @@
             border-radius: 3px;
         }
 
+        .severity-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 8px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+        }
+
+        .severity-critical {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            border: 1px solid var(--color-danger);
+        }
+
+        .severity-high {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fcd34d;
+            border: 1px solid var(--color-warning);
+        }
+
+        .severity-medium {
+            background: rgba(56, 189, 248, 0.2);
+            color: #7dd3fc;
+            border: 1px solid var(--color-accent);
+        }
+
         .quickstart {
             background: var(--color-bg-secondary);
             border-radius: 12px;
@@ -668,102 +696,122 @@ const API_KEY = process.env.STRIPE_API_KEY;</div>
             aws_access_key: {
                 name: 'AWS Access Key',
                 regex: /AKIA[0-9A-Z]{16}/g,
-                description: 'AWS Access Key ID'
+                description: 'AWS Access Key ID',
+                severity: 'CRITICAL'
             },
             aws_secret_key: {
                 name: 'AWS Secret Key',
                 regex: /aws_secret_access_key\s*=\s*['"]?([A-Za-z0-9/+=]{40})['"]?/gi,
-                description: 'AWS Secret Access Key'
+                description: 'AWS Secret Access Key',
+                severity: 'CRITICAL'
             },
             stripe_live_key: {
                 name: 'Stripe Live API Key',
                 regex: /sk_live_[0-9a-zA-Z]{24,}/g,
-                description: 'Stripe Secret Live Key'
+                description: 'Stripe Secret Live Key',
+                severity: 'CRITICAL'
             },
             stripe_test_key: {
                 name: 'Stripe Test API Key',
                 regex: /sk_test_[0-9a-zA-Z]{24,}/g,
-                description: 'Stripe Secret Test Key'
+                description: 'Stripe Secret Test Key',
+                severity: 'HIGH'
             },
             github_token: {
                 name: 'GitHub Token',
                 regex: /ghp_[a-zA-Z0-9]{36,}/g,
-                description: 'GitHub Personal Access Token'
+                description: 'GitHub Personal Access Token',
+                severity: 'CRITICAL'
             },
             github_oauth: {
                 name: 'GitHub OAuth Token',
                 regex: /gho_[a-zA-Z0-9]{36,}/g,
-                description: 'GitHub OAuth Access Token'
+                description: 'GitHub OAuth Access Token',
+                severity: 'CRITICAL'
             },
             google_api_key: {
                 name: 'Google API Key',
                 regex: /AIza[0-9A-Za-z_-]{35}/g,
-                description: 'Google Cloud API Key'
+                description: 'Google Cloud API Key',
+                severity: 'HIGH'
             },
             slack_token: {
                 name: 'Slack Token',
                 regex: /xox[baprs]-[0-9a-zA-Z-]{10,}/g,
-                description: 'Slack API Token'
+                description: 'Slack API Token',
+                severity: 'HIGH'
             },
             slack_webhook: {
                 name: 'Slack Webhook',
                 regex: /https:\/\/hooks\.slack\.com\/services\/T[a-zA-Z0-9_]+\/B[a-zA-Z0-9_]+\/[a-zA-Z0-9_]+/g,
-                description: 'Slack Webhook URL'
+                description: 'Slack Webhook URL',
+                severity: 'HIGH'
             },
             jwt_token: {
                 name: 'JWT Token',
                 regex: /eyJ[a-zA-Z0-9_-]*\.eyJ[a-zA-Z0-9_-]*\.[a-zA-Z0-9_-]*/g,
-                description: 'JSON Web Token'
+                description: 'JSON Web Token',
+                severity: 'MEDIUM'
             },
             private_key: {
                 name: 'Private Key',
                 regex: /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/g,
-                description: 'Private Key (RSA/EC/OpenSSH)'
+                description: 'Private Key (RSA/EC/OpenSSH)',
+                severity: 'CRITICAL'
             },
             database_url: {
                 name: 'Database Connection URL',
                 regex: /(?:mysql|postgresql|mongodb|redis):\/\/[^\s'"]+/gi,
-                description: 'Database Connection String'
+                description: 'Database Connection String',
+                severity: 'CRITICAL'
             },
             generic_api_key: {
                 name: 'Generic API Key',
                 regex: /(?:api[_-]?key|apikey)\s*[:=]\s*['"]([a-zA-Z0-9_-]{20,})['"]?/gi,
-                description: 'Generic API Key Pattern'
+                description: 'Generic API Key Pattern',
+                severity: 'HIGH'
             },
             password_field: {
                 name: 'Password in Code',
                 regex: /(?:password|passwd|pwd)\s*[:=]\s*['"]([^'"]{8,})['"]?/gi,
-                description: 'Password Assignment (8+ chars)'
+                description: 'Password Assignment (8+ chars)',
+                severity: 'HIGH'
             },
             bearer_token: {
                 name: 'Bearer Token',
                 regex: /Bearer\s+[a-zA-Z0-9_-]{20,}/gi,
-                description: 'Bearer Authentication Token'
+                description: 'Bearer Authentication Token',
+                severity: 'HIGH'
             },
             oauth_token: {
                 name: 'OAuth Token',
                 regex: /oauth[_-]?token\s*[:=]\s*['"]([a-zA-Z0-9_-]{20,})['"]?/gi,
-                description: 'OAuth Access Token'
+                description: 'OAuth Access Token',
+                severity: 'HIGH'
             },
             sendgrid_key: {
                 name: 'SendGrid API Key',
                 regex: /SG\.[a-zA-Z0-9_-]{22}\.[a-zA-Z0-9_-]{43}/g,
-                description: 'SendGrid API Key'
+                description: 'SendGrid API Key',
+                severity: 'HIGH'
             },
             twilio_key: {
                 name: 'Twilio API Key',
                 regex: /SK[a-z0-9]{32}/g,
-                description: 'Twilio API Key'
+                description: 'Twilio API Key',
+                severity: 'HIGH'
             },
             azure_key: {
                 name: 'Azure Key',
                 regex: /(?:azure|storage)[_-]?(?:key|secret)\s*[:=]\s*['"]?([a-zA-Z0-9+/]{44}={0,2})['"]?/gi,
-                description: 'Azure Storage/API Key'
+                description: 'Azure Storage/API Key',
+                severity: 'HIGH'
             },
             heroku_api_key: {
                 name: 'Heroku API Key',
                 regex: /(?:heroku|HEROKU)[_-]?(?:api[_-]?)?(?:key|token)\s*[:=]\s*['"]?([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})['"]?/gi,
-                description: 'Heroku API Key with context'
+                description: 'Heroku API Key with context',
+                severity: 'HIGH'
             }
         };
 
@@ -810,7 +858,8 @@ const API_KEY = process.env.STRIPE_API_KEY;</div>
                             match: token,
                             content: line.trim(),
                             entropy: entropy.toFixed(2),
-                            description: 'Potential secret with high randomness'
+                            description: 'Potential secret with high randomness',
+                            severity: 'MEDIUM'
                         });
                     }
                 }
@@ -851,7 +900,8 @@ const API_KEY = process.env.STRIPE_API_KEY;</div>
                                     line: index + 1,
                                     match: matchValue,
                                     content: line.trim(),
-                                    description: pattern.description
+                                    description: pattern.description,
+                                    severity: pattern.severity
                                 });
                                 // Prevent infinite loop on zero-width matches
                                 if (match.index === localRegex.lastIndex) {
@@ -958,20 +1008,24 @@ const API_KEY = process.env.STRIPE_API_KEY;</div>
             // Show copy button
             resultActions.style.display = 'flex';
 
-            // Calculate stats
-            const criticalCount = findings.filter(f => 
-                f.type.includes('Live') || f.type.includes('Private') || f.type.includes('AWS Secret')
-            ).length;
+            // Calculate stats by severity
+            const criticalCount = findings.filter(f => f.severity === 'CRITICAL').length;
+            const highCount = findings.filter(f => f.severity === 'HIGH').length;
+            const mediumCount = findings.filter(f => f.severity === 'MEDIUM').length;
 
             statsContainer.innerHTML = `
                 <span class="stat-badge stat-danger">⚠️ ${findings.length} secret${findings.length > 1 ? 's' : ''} found</span>
                 ${criticalCount > 0 ? `<span class="stat-badge stat-warning">🔥 ${criticalCount} critical</span>` : ''}
+                ${highCount > 0 ? `<span class="stat-badge stat-warning">⚡ ${highCount} high</span>` : ''}
+                ${mediumCount > 0 ? `<span class="stat-badge" style="background: rgba(56, 189, 248, 0.2); color: var(--color-accent); border: 1px solid var(--color-accent);">ℹ️ ${mediumCount} medium</span>` : ''}
             `;
 
             // Display findings (with safe HTML escaping)
             findingsContainer.innerHTML = findings.map(finding => {
                 const escapedMatch = escapeHtml(finding.match);
                 const escapedContent = escapeHtml(finding.content);
+                const severity = finding.severity || 'MEDIUM';
+                const severityClass = `severity-${severity.toLowerCase()}`;
                 // Highlight the secret in the escaped content
                 const highlightedContent = escapedContent.replace(
                     new RegExp(escapedMatch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'),
@@ -982,7 +1036,10 @@ const API_KEY = process.env.STRIPE_API_KEY;</div>
                     <div class="finding">
                         <div class="finding-header">
                             <span class="finding-type">🔴 ${escapeHtml(finding.type)}</span>
-                            <span class="finding-line">Line ${finding.line}</span>
+                            <span style="display: flex; align-items: center; gap: 10px;">
+                                <span class="severity-badge ${severityClass}">${escapeHtml(severity)}</span>
+                                <span class="finding-line">Line ${finding.line}</span>
+                            </span>
                         </div>
                         <p style="color: var(--color-text-secondary); font-size: 13px; margin-bottom: 4px;">
                             ${escapeHtml(finding.description)}
