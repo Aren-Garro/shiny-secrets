@@ -1,6 +1,6 @@
 {
   "name": "shiny-secrets",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Fast, lightweight secret scanner with 21+ detection patterns, entropy analysis, and zero dependencies. Detect hardcoded API keys, tokens, and credentials before they reach production.",
   "main": "scanner.js",
   "bin": {
@@ -9,9 +9,15 @@
   },
   "scripts": {
     "test": "node test.js && node test-v2.js",
+    "test:v1": "node test.js",
+    "test:v2": "node test-v2.js",
     "scan": "node scanner.js",
     "scan:v2": "node scanner-v2.js",
-    "prepublishOnly": "npm test"
+    "scan:staged": "node scanner-v2.js --scan-staged --fail-on=critical",
+    "lint": "eslint *.js",
+    "lint:fix": "eslint *.js --fix",
+    "prepublishOnly": "npm test",
+    "validate": "npm test && npm run lint"
   },
   "keywords": [
     "security",
@@ -66,5 +72,22 @@
   "funding": {
     "type": "github",
     "url": "https://github.com/sponsors/Aren-Garro"
+  },
+  "devDependencies": {
+    "eslint": "^8.0.0"
+  },
+  "eslintConfig": {
+    "env": {
+      "node": true,
+      "es2021": true
+    },
+    "extends": "eslint:recommended",
+    "parserOptions": {
+      "ecmaVersion": 2021
+    },
+    "rules": {
+      "no-console": "off",
+      "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }]
+    }
   }
 }
