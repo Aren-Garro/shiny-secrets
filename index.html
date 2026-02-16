@@ -662,163 +662,9 @@ const API_KEY = process.env.STRIPE_API_KEY;</div>
         </div>
     </div>
 
+    <script src="lib/core.js"></script>
+    <script src="lib/browser-scanner.js"></script>
     <script>
-        // Secret detection patterns
-        const patterns = {
-            aws_access_key: {
-                name: 'AWS Access Key',
-                regex: /AKIA[0-9A-Z]{16}/g,
-                description: 'AWS Access Key ID'
-            },
-            aws_secret_key: {
-                name: 'AWS Secret Key',
-                regex: /aws_secret_access_key\s*=\s*['"]?([A-Za-z0-9/+=]{40})['"]?/gi,
-                description: 'AWS Secret Access Key'
-            },
-            stripe_live_key: {
-                name: 'Stripe Live API Key',
-                regex: /sk_live_[0-9a-zA-Z]{24,}/g,
-                description: 'Stripe Secret Live Key'
-            },
-            stripe_test_key: {
-                name: 'Stripe Test API Key',
-                regex: /sk_test_[0-9a-zA-Z]{24,}/g,
-                description: 'Stripe Secret Test Key'
-            },
-            github_token: {
-                name: 'GitHub Token',
-                regex: /ghp_[a-zA-Z0-9]{36,}/g,
-                description: 'GitHub Personal Access Token'
-            },
-            github_oauth: {
-                name: 'GitHub OAuth Token',
-                regex: /gho_[a-zA-Z0-9]{36,}/g,
-                description: 'GitHub OAuth Access Token'
-            },
-            google_api_key: {
-                name: 'Google API Key',
-                regex: /AIza[0-9A-Za-z_-]{35}/g,
-                description: 'Google Cloud API Key'
-            },
-            slack_token: {
-                name: 'Slack Token',
-                regex: /xox[baprs]-[0-9a-zA-Z-]{10,}/g,
-                description: 'Slack API Token'
-            },
-            slack_webhook: {
-                name: 'Slack Webhook',
-                regex: /https:\/\/hooks\.slack\.com\/services\/T[a-zA-Z0-9_]+\/B[a-zA-Z0-9_]+\/[a-zA-Z0-9_]+/g,
-                description: 'Slack Webhook URL'
-            },
-            jwt_token: {
-                name: 'JWT Token',
-                regex: /eyJ[a-zA-Z0-9_-]*\.eyJ[a-zA-Z0-9_-]*\.[a-zA-Z0-9_-]*/g,
-                description: 'JSON Web Token'
-            },
-            private_key: {
-                name: 'Private Key',
-                regex: /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/g,
-                description: 'Private Key (RSA/EC/OpenSSH)'
-            },
-            database_url: {
-                name: 'Database Connection URL',
-                regex: /(?:mysql|postgresql|mongodb|redis):\/\/[^\s'"]+/gi,
-                description: 'Database Connection String'
-            },
-            generic_api_key: {
-                name: 'Generic API Key',
-                regex: /(?:api[_-]?key|apikey)\s*[:=]\s*['"]([a-zA-Z0-9_-]{20,})['"]?/gi,
-                description: 'Generic API Key Pattern'
-            },
-            password_field: {
-                name: 'Password in Code',
-                regex: /(?:password|passwd|pwd)\s*[:=]\s*['"]([^'"]{8,})['"]?/gi,
-                description: 'Password Assignment (8+ chars)'
-            },
-            bearer_token: {
-                name: 'Bearer Token',
-                regex: /Bearer\s+[a-zA-Z0-9_-]{20,}/gi,
-                description: 'Bearer Authentication Token'
-            },
-            oauth_token: {
-                name: 'OAuth Token',
-                regex: /oauth[_-]?token\s*[:=]\s*['"]([a-zA-Z0-9_-]{20,})['"]?/gi,
-                description: 'OAuth Access Token'
-            },
-            sendgrid_key: {
-                name: 'SendGrid API Key',
-                regex: /SG\.[a-zA-Z0-9_-]{22}\.[a-zA-Z0-9_-]{43}/g,
-                description: 'SendGrid API Key'
-            },
-            twilio_key: {
-                name: 'Twilio API Key',
-                regex: /SK[a-z0-9]{32}/g,
-                description: 'Twilio API Key'
-            },
-            azure_key: {
-                name: 'Azure Key',
-                regex: /(?:azure|storage)[_-]?(?:key|secret)\s*[:=]\s*['"]?([a-zA-Z0-9+/]{44}={0,2})['"]?/gi,
-                description: 'Azure Storage/API Key'
-            },
-            heroku_api_key: {
-                name: 'Heroku API Key',
-                regex: /(?:heroku|HEROKU)[_-]?(?:api[_-]?)?(?:key|token)\s*[:=]\s*['"]?([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})['"]?/gi,
-                description: 'Heroku API Key with context'
-            }
-        };
-
-        // Shannon entropy calculation (optimized)
-        function calculateEntropy(str) {
-            if (!str || str.length < 8) return 0;
-            const len = str.length;
-            const freq = {};
-            for (let i = 0; i < len; i++) {
-                freq[str[i]] = (freq[str[i]] || 0) + 1;
-            }
-            let entropy = 0;
-            for (let char in freq) {
-                const p = freq[char] / len;
-                entropy -= p * Math.log2(p);
-            }
-            return entropy;
-        }
-
-        // High entropy string detection (improved accuracy)
-        function detectHighEntropy(line, lineNumber) {
-            const findings = [];
-            // Avoid common false positives
-            if (/^[\s#\/\*]*(?:import|function|class|if|for|while)\b/.test(line)) {
-                return findings;
-            }
-            
-            const tokens = line.split(/[\s'"=:,;(){}[\]<>]/);
-            
-            for (let token of tokens) {
-                // Check length and basic characteristics
-                if (token.length >= 20 && token.length <= 100 && /[a-zA-Z0-9]/.test(token)) {
-                    // Skip common patterns that aren't secrets
-                    if (/^(http|https|www|localhost|127\.0\.0\.1)/.test(token)) continue;
-                    if (/^\d+$/.test(token)) continue; // Skip pure numbers
-                    if (token.includes('example') || token.includes('test') || token.includes('demo')) continue;
-                    
-                    const entropy = calculateEntropy(token);
-                    // Higher threshold to reduce false positives
-                    if (entropy >= 4.7 && !/^[a-z]+$/.test(token)) {
-                        findings.push({
-                            type: 'High Entropy String',
-                            line: lineNumber,
-                            match: token,
-                            content: line.trim(),
-                            entropy: entropy.toFixed(2),
-                            description: 'Potential secret with high randomness'
-                        });
-                    }
-                }
-            }
-            return findings;
-        }
-
-        // Main scanning function (optimized and bug-fixed)
         function scanCode() {
             const input = document.getElementById('codeInput').value;
             if (!input.trim()) {
@@ -826,74 +672,24 @@ const API_KEY = process.env.STRIPE_API_KEY;</div>
                 return;
             }
 
-            // Show loading
             const loading = document.getElementById('loading');
             const resultsSection = document.getElementById('resultsSection');
             loading.classList.add('active');
             resultsSection.style.display = 'none';
 
-            // Process in next tick to allow UI update
             setTimeout(() => {
                 try {
-                    const findings = [];
-                    const lines = input.split('\n');
-
-                    // Apply regex patterns (optimized)
-                    for (let [key, pattern] of Object.entries(patterns)) {
-                        lines.forEach((line, index) => {
-                            const localRegex = new RegExp(pattern.regex.source, pattern.regex.flags);
-                            let match;
-                            while ((match = localRegex.exec(line)) !== null) {
-                                // Extract captured group if exists, otherwise use full match
-                                const matchValue = match[1] || match[0];
-                                findings.push({
-                                    type: pattern.name,
-                                    line: index + 1,
-                                    match: matchValue,
-                                    content: line.trim(),
-                                    description: pattern.description
-                                });
-                                // Prevent infinite loop on zero-width matches
-                                if (match.index === localRegex.lastIndex) {
-                                    localRegex.lastIndex++;
-                                }
-                            }
-                        });
-                    }
-
-                    // Apply entropy detection (with improved filtering)
-                    lines.forEach((line, index) => {
-                        const entropyFindings = detectHighEntropy(line, index + 1);
-                        findings.push(...entropyFindings);
-                    });
-
-                    // Remove duplicates (optimized)
-                    const uniqueFindings = [];
-                    const seen = new Set();
-                    for (let finding of findings) {
-                        const key = `${finding.type}|${finding.line}|${finding.match}`;
-                        if (!seen.has(key)) {
-                            seen.add(key);
-                            uniqueFindings.push(finding);
-                        }
-                    }
-
-                    // Sort by line number
-                    uniqueFindings.sort((a, b) => a.line - b.line);
-
-                    // Display results
-                    displayResults(uniqueFindings);
+                    const findings = window.ShinySecretsBrowserScanner.scanInput(input);
+                    displayResults(findings);
                 } catch (error) {
                     console.error('Scan error:', error);
                     alert('An error occurred during scanning. Please try again.');
                 } finally {
-                    // Always hide loading
                     loading.classList.remove('active');
                 }
             }, 300);
         }
 
-        // Copy results to clipboard
         function copyResults() {
             const findings = window.lastFindings || [];
             if (findings.length === 0) {
@@ -901,18 +697,29 @@ const API_KEY = process.env.STRIPE_API_KEY;</div>
                 return;
             }
 
-            let text = `Secret Scanner Results\n`;
-            text += `======================\n\n`;
-            text += `Total secrets found: ${findings.length}\n\n`;
-            
+            let text = `Secret Scanner Results
+`;
+            text += `======================
+
+`;
+            text += `Total secrets found: ${findings.length}
+
+`;
+
             findings.forEach((finding, index) => {
-                text += `${index + 1}. ${finding.type}\n`;
-                text += `   Line: ${finding.line}\n`;
-                text += `   Match: ${finding.match}\n`;
+                text += `${index + 1}. ${finding.type}
+`;
+                text += `   Line: ${finding.line}
+`;
+                text += `   Match: ${finding.match}
+`;
                 if (finding.entropy) {
-                    text += `   Entropy: ${finding.entropy} bits\n`;
+                    text += `   Entropy: ${finding.entropy} bits
+`;
                 }
-                text += `   Code: ${finding.content}\n\n`;
+                text += `   Code: ${finding.content}
+
+`;
             });
 
             navigator.clipboard.writeText(text).then(() => {
@@ -928,9 +735,7 @@ const API_KEY = process.env.STRIPE_API_KEY;</div>
             });
         }
 
-        // Display results (bug-fixed and optimized)
         function displayResults(findings) {
-            // Store findings for copy function
             window.lastFindings = findings;
 
             const resultsSection = document.getElementById('resultsSection');
@@ -955,11 +760,9 @@ const API_KEY = process.env.STRIPE_API_KEY;</div>
                 return;
             }
 
-            // Show copy button
             resultActions.style.display = 'flex';
 
-            // Calculate stats
-            const criticalCount = findings.filter(f => 
+            const criticalCount = findings.filter(f =>
                 f.type.includes('Live') || f.type.includes('Private') || f.type.includes('AWS Secret')
             ).length;
 
@@ -968,11 +771,9 @@ const API_KEY = process.env.STRIPE_API_KEY;</div>
                 ${criticalCount > 0 ? `<span class="stat-badge stat-warning">🔥 ${criticalCount} critical</span>` : ''}
             `;
 
-            // Display findings (with safe HTML escaping)
             findingsContainer.innerHTML = findings.map(finding => {
                 const escapedMatch = escapeHtml(finding.match);
                 const escapedContent = escapeHtml(finding.content);
-                // Highlight the secret in the escaped content
                 const highlightedContent = escapedContent.replace(
                     new RegExp(escapedMatch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'),
                     `<span class="secret-highlight">${escapedMatch}</span>`
@@ -993,26 +794,22 @@ const API_KEY = process.env.STRIPE_API_KEY;</div>
                 `;
             }).join('');
 
-            // Scroll to results smoothly
             setTimeout(() => {
                 resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 100);
         }
 
-        // Helper function to escape HTML
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
         }
 
-        // Clear all
         function clearAll() {
             document.getElementById('codeInput').value = '';
             document.getElementById('resultsSection').style.display = 'none';
         }
 
-        // Load sample data (WITHOUT auto-scan for better UX)
         function loadSample(type) {
             const samples = {
                 aws: `# AWS Configuration
@@ -1049,42 +846,38 @@ env:
 export const config = {
     // Google API
     googleApiKey: 'AIzaSyDaGmWKa4JsXZ-HjGw7ISLn_3namBGewQe',
-    
+
     // Slack integration
     slackToken: 'xoxb-123456789012-1234567890123-4ut0m4t10nt35tt0k3n',
     slackWebhook: 'https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX',
-    
+
     // Database
     dbUrl: 'postgresql://admin:SuperSecret123@db.example.com:5432/mydb',
-    
+
     // SendGrid
     sendgridKey: 'SG.ngeVfQFYQlKU0ufo8x5d1A.TwL2iGABf9DHoTf-09kqeF8tHH' + 'K1e4gc3VYaVfExyzW',
-    
+
     // JWT secret
     jwtSecret: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
-    
+
     // Admin credentials
     adminPassword: 'Ch4ng3M3N0w!2024'
 };`
             };
 
             document.getElementById('codeInput').value = samples[type] || '';
-            // Removed auto-scan - let users read the sample first
         }
 
-        // Keyboard shortcuts and initialization
         document.addEventListener('DOMContentLoaded', () => {
             const textarea = document.getElementById('codeInput');
-            
-            // Ctrl/Cmd + Enter to scan
+
             textarea.addEventListener('keydown', (e) => {
                 if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
                     e.preventDefault();
                     scanCode();
                 }
             });
-            
-            // Auto-focus
+
             textarea.focus();
         });
     </script>
