@@ -258,6 +258,34 @@
             border-radius: 3px;
         }
 
+        .severity-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 8px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+        }
+
+        .severity-critical {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            border: 1px solid var(--color-danger);
+        }
+
+        .severity-high {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fcd34d;
+            border: 1px solid var(--color-warning);
+        }
+
+        .severity-medium {
+            background: rgba(56, 189, 248, 0.2);
+            color: #7dd3fc;
+            border: 1px solid var(--color-accent);
+        }
+
         .quickstart {
             background: var(--color-bg-secondary);
             border-radius: 12px;
@@ -769,6 +797,8 @@ const API_KEY = process.env.STRIPE_API_KEY;</div>
             statsContainer.innerHTML = `
                 <span class="stat-badge stat-danger">⚠️ ${findings.length} secret${findings.length > 1 ? 's' : ''} found</span>
                 ${criticalCount > 0 ? `<span class="stat-badge stat-warning">🔥 ${criticalCount} critical</span>` : ''}
+                ${highCount > 0 ? `<span class="stat-badge stat-warning">⚡ ${highCount} high</span>` : ''}
+                ${mediumCount > 0 ? `<span class="stat-badge" style="background: rgba(56, 189, 248, 0.2); color: var(--color-accent); border: 1px solid var(--color-accent);">ℹ️ ${mediumCount} medium</span>` : ''}
             `;
 
             findingsContainer.innerHTML = findings.map(finding => {
@@ -783,7 +813,10 @@ const API_KEY = process.env.STRIPE_API_KEY;</div>
                     <div class="finding">
                         <div class="finding-header">
                             <span class="finding-type">🔴 ${escapeHtml(finding.type)}</span>
-                            <span class="finding-line">Line ${finding.line}</span>
+                            <span style="display: flex; align-items: center; gap: 10px;">
+                                <span class="severity-badge ${severityClass}">${escapeHtml(severity)}</span>
+                                <span class="finding-line">Line ${finding.line}</span>
+                            </span>
                         </div>
                         <p style="color: var(--color-text-secondary); font-size: 13px; margin-bottom: 4px;">
                             ${escapeHtml(finding.description)}
